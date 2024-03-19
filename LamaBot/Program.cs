@@ -1,73 +1,44 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Discord.Interactions;
+using Microsoft.Extensions.Logging;
 
 namespace LamaBot
 {
-    internal class Program
+    internal static class Program
     {
-        private static DiscordSocketClient _client;
-
         public static async Task Main(string[] args)
         {
-            var discordConfig = await GetConfigSectionAsync("discord");
-
-            using var client = new DiscordSocketClient(new DiscordSocketConfig
-            {
-                UseInteractionSnowflakeDate = false,
-            });
-            client.Log += DiscordLog;
-
-            await client.LoginAsync(TokenType.Bot, discordConfig["Token"]);
-            await client.StartAsync();
-
-            _client = client;
-            client.Ready += Client_Ready;
-
-            await Task.Delay(-1);
-        }
-
-        private static async Task Client_Ready()
-        {
-            var discordConfig = await GetConfigSectionAsync("discord");
-            var testGuild = _client.GetGuild(ulong.Parse(discordConfig["TestGuildId"]));
-
-            var registry = new CommandRegistry(_client, testGuild);
-            await registry.RegisterCommandsAsync();
-        }
-
-        private static Task DiscordLog(LogMessage message)
-        {
-            Console.WriteLine(message);
-            return Task.CompletedTask;
-        }
-
-        private static async Task<Dictionary<string, string>> GetConfigSectionAsync(string section)
-        {
-            var configText = await File.ReadAllLinesAsync("config.ini").ConfigureAwait(false);
-            var foundSection = false;
-            var result = new Dictionary<string, string>();
-            foreach (var rawLine in configText)
-            {
-                var line = rawLine.Trim();
-                if (line.StartsWith('[') && line.EndsWith(']'))
+            var builder = Host.CreateDefaultBuilder(args)
+                .UseSystemd()
+                .ConfigureAppConfiguration((hostContext, configuration) =>
                 {
-                    var sectionName = line.Substring(1, line.Length - 2);
-                    if (sectionName.Equals(section, StringComparison.OrdinalIgnoreCase))
-                        foundSection = true;
-                    else if (foundSection)
-                        break;
-                }
+                    configuration
+                        .AddIniFile("config.ini")
+                        .AddIniFile($"config.{hostContext.HostingEnvironment.EnvironmentName}.ini", true);
+                })
+                .ConfigureServices((hostContext, services) => {
+                    var discordConfig = new DiscordSocketConfig
+                    {
+                        UseInteractionSnowflakeDate = false,
+                    };
+                    services.Configure<DiscordOptions>(hostContext.Configuration.GetSection("Discord"))
+                        .AddSingleton(discordConfig)
+                        .AddSingleton<DiscordSocketClient>()
+                        .AddSingleton<DiscordService>()
+                        .AddSingleton<IHostedService>(sp => sp.GetRequiredService<DiscordService>())
+                        .AddSingleton<IDiscordFacade>(sp => sp.GetRequiredService<DiscordService>())
+                        .AddSingleton<CommandService>()
+                        .AddSingleton<IHostedService>(sp => sp.GetRequiredService<CommandService>())
+                        ;
+                });
 
-                if (foundSection)
-                {
-                    var parts = line.Split('=', 2);
-                    if (parts.Length != 2)
-                        continue;
+            using var host = builder.Build();
 
-                    result[parts[0]] = parts[1];
-                }
-            }
-            return result;
+            await host.RunAsync();
         }
     }
 }
