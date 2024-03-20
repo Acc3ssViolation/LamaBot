@@ -21,6 +21,7 @@ namespace LamaBot
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 UseInteractionSnowflakeDate = false,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
             });
             _ready = new TaskCompletionSource();
         }
