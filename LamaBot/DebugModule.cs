@@ -1,9 +1,12 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace LamaBot
 {
-    internal class DebugModule : InteractionModuleBase
+    public class DebugModule : InteractionModuleBase
     {
         private readonly ILogger<DebugModule> _logger;
 
@@ -12,11 +15,43 @@ namespace LamaBot
             _logger = logger;
         }
 
-        [SlashCommand("info", "Basic slash command")]
-        public async Task TestAsync()
+        [RequireOwner]
+        [SlashCommand("status", "Get info about the bot status")]
+        public async Task GetStatusAsync()
         {
-            _logger.LogDebug("Test command called");
-            await RespondAsync("This is a test");
+            var embed = new EmbedBuilder()
+                .WithAuthor(Context.Client.CurrentUser.Username)
+                .WithTitle("Bot info")
+                .WithFields(
+                    new EmbedFieldBuilder().WithName("Version").WithValue(GetVersion()),
+                    new EmbedFieldBuilder().WithName("Uptime").WithValue(GetUptime())
+                )
+                .WithCurrentTimestamp()
+                .Build();
+
+            await RespondAsync(embed: embed);
+        }
+
+        [RequireOwner]
+        [SlashCommand("restart", "Restart the bot")]
+        public async Task RestartAsync()
+        {
+            await RespondAsync("Rebooting bot...");
+            await Task.Delay(1000);
+            Environment.Exit(0);
+        }
+
+        private static string GetVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            return fileVersionInfo.ProductVersion ?? "Unknown";
+        }
+
+        private static string GetUptime()
+        {
+            var uptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
+            return $"{uptime:%d} days {uptime:h\\:mm\\:ss} hours";
         }
     }
 }

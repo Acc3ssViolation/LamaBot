@@ -7,8 +7,7 @@ namespace LamaBot.Quotes
         public static IServiceCollection AddQuotes(this IServiceCollection serviceCollection)
         {
             return serviceCollection
-                .AddSingleton<IQuoteRepository, QuoteRepository>()
-                .AddModule<QuoteInteractionModule>();
+                .AddSingleton<IQuoteRepository, QuoteRepository>();
         }
     }
 }

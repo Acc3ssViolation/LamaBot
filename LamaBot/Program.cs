@@ -1,22 +1,23 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using Discord.Interactions;
 using Microsoft.Extensions.Logging;
 using LamaBot.Quotes;
 using LamaBot.Database;
+using LamaBot.Cron;
 
 namespace LamaBot
 {
-    internal static class Program
+    internal class Program
     {
         public static async Task Main(string[] args)
         {
             using var host = CreateHostBuilder(args).Build();
 
             await host.Services.GetRequiredService<DatabaseStorage>().InitializeAsync();
+            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+            TaskExtensions.Initialize(logger);
             await host.RunAsync();
         }
 
@@ -37,9 +38,8 @@ namespace LamaBot
                     };
                     services.Configure<DiscordOptions>(hostContext.Configuration.GetSection("Discord"))
                         .AddDatabase(hostContext.Configuration.GetSection("Database"))
-                        .AddModules()
                         .AddQuotes()
-                        .AddModule<DebugModule>()
+                        .AddCronMessages()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()
                         .AddSingleton<DiscordService>()

@@ -21,7 +21,7 @@ namespace LamaBot
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 UseInteractionSnowflakeDate = false,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.GuildMembers,
             });
             _ready = new TaskCompletionSource();
         }
@@ -50,6 +50,12 @@ namespace LamaBot
 
                 await _client.LoginAsync(TokenType.Bot, _options.Value.Token);
                 await _client.StartAsync();
+
+                _client.GuildAvailable += (guild) =>
+                {
+                    _client.DownloadUsersAsync([guild]).LogFailure();
+                    return Task.CompletedTask;
+                };
 
                 await stoppingToken.UntilCancelledNoThrow();
             }

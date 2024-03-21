@@ -34,10 +34,7 @@ namespace LamaBot
             });
             interactionService.Log += new DiscordLogger<InteractionService>(_loggerFactory).Log;
 
-            var moduleTypes = _serviceProvider.GetRequiredService<IModuleProvider>().GetModuleTypes();
-
-            foreach (var moduleType in moduleTypes)
-                await interactionService.AddModuleAsync(moduleType, _serviceProvider);
+            await interactionService.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), _serviceProvider).ConfigureAwait(false);
 
             _discord.Client.InteractionCreated += async (x) =>
             {

@@ -5,6 +5,7 @@ namespace LamaBot.Database
     public class ApplicationDbContext : DbContext
     {
         public DbSet<DbQuote> Quotes { get; set; }
+        public DbSet<DbCronMessage> CronMessages { get; set; }
 
         public ApplicationDbContext() : base(DefaultOptions)
         {
@@ -17,6 +18,7 @@ namespace LamaBot.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             DbQuote.OnModelCreating(modelBuilder);
+            DbCronMessage.OnModelCreating(modelBuilder);
         }
 
         public static DbContextOptions<ApplicationDbContext> DefaultOptions

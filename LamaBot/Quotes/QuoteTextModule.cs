@@ -19,17 +19,33 @@ namespace LamaBot.Quotes
         [Summary("Gets a quote.")]
         public async Task GetQuoteAsync([Remainder] string? quoteSearch = null)
         {
+            var guildId = Context.Guild.Id;
+
+            Quote? quote = null;
             if (string.IsNullOrWhiteSpace(quoteSearch))
             {
-                var guildId = Context.Guild.Id;
-                var quote = await _quoteRepository.GetRandomQuoteAsync(guildId);
-                if (quote == null)
-                {
-                    await ReplyAsync("No quote found. Wow, chat more, losers.");
-                    return;
-                }
-                await ReplyAsync(embed: quote.CreateEmbed());
+                quote = await _quoteRepository.GetRandomQuoteAsync(guildId);
             }
+            else if (int.TryParse(quoteSearch, out var quoteId))
+            {
+                quote = await _quoteRepository.GetQuoteAsync(guildId, quoteId);
+            }
+            else
+            {
+                var resolvedUser = Context.Guild.Users.FirstOrDefault(u =>
+                    quoteSearch.Equals(u.Username, StringComparison.OrdinalIgnoreCase) ||
+                    quoteSearch.Equals(u.Nickname, StringComparison.OrdinalIgnoreCase)
+                );
+                if (resolvedUser != null)
+                    quote = await _quoteRepository.GetRandomQuoteAsync(guildId, resolvedUser.Username);
+            }
+
+            if (quote == null)
+            {
+                await ReplyAsync("No quote found. Wow, chat more, losers.");
+                return;
+            }
+            await ReplyAsync(embed: quote.CreateEmbed());
         }
     }
 }

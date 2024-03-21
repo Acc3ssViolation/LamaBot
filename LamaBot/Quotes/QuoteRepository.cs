@@ -15,6 +15,17 @@ namespace LamaBot.Quotes
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        public async Task<Quote?> GetQuoteAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var quote = await dbContext.Quotes.AsNoTracking().OfGuild(guildId).SingleOrDefaultAsync(q => q.Id == quoteId, cancellationToken).ConfigureAwait(false);
+            if (quote == null)
+                return null;
+
+            return ToModel(quote);
+        }
+
         public async Task<Quote?> GetRandomQuoteAsync(ulong guildId, string? author = null, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();
@@ -61,6 +72,13 @@ namespace LamaBot.Quotes
             return count > 0;
         }
 
+        public async Task<IReadOnlyList<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+            var quotes = await dbContext.Quotes.AsNoTracking().OfGuild(guildId).ToListAsync(cancellationToken).ConfigureAwait(false);
+            return quotes.Select(ToModel).ToList();
+        }
+
         private static void FromModel(DbQuote dbQuote, Quote model)
         {
             if (dbQuote.Id != model.Id && dbQuote.GuildId != model.GuildId)
@@ -69,6 +87,7 @@ namespace LamaBot.Quotes
             dbQuote.UserId = model.UserId;
             dbQuote.UserName = model.UserName;
             dbQuote.Content = model.Content;
+            dbQuote.ChannelId = model.ChannelId;
             dbQuote.ChannelName = model.ChannelName;
             dbQuote.MessageId = model.MessageId;
             dbQuote.TimestampUtc = model.TimestampUtc;
@@ -76,7 +95,7 @@ namespace LamaBot.Quotes
 
         private static Quote ToModel(DbQuote quote)
         {
-            return new Quote(quote.GuildId, quote.Id, quote.UserId, quote.UserName, quote.ChannelName, quote.Content, quote.MessageId, quote.TimestampUtc);
+            return new Quote(quote.GuildId, quote.Id, quote.UserId, quote.UserName, quote.ChannelId, quote.ChannelName, quote.Content, quote.MessageId, quote.TimestampUtc);
         }
     }
 
