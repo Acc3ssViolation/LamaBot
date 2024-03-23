@@ -63,7 +63,7 @@ namespace LamaBot
 
                 var argPos = 0;
                 // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-                if (!userMessage.HasCharPrefix('.', ref argPos) ||
+                if (!userMessage.HasCharPrefix('!', ref argPos) ||
                     userMessage.Author.IsBot)
                     return;
 
