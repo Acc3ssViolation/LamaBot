@@ -17,7 +17,7 @@ namespace LamaBot.Quotes
             else
                 text.Append(quote.UserName);
 
-            text.Append($"[(Jump)](https://discord.com/channels/{quote.GuildId}/{quote.ChannelId}/{quote.MessageId})");
+            text.Append($" [(Jump)](https://discord.com/channels/{quote.GuildId}/{quote.ChannelId}/{quote.MessageId})");
 
             var embed = new EmbedBuilder()
                 .WithTitle($"#{quote.Id}")

@@ -38,6 +38,8 @@ namespace LamaBot.Quotes
                 );
                 if (resolvedUser != null)
                     quote = await _quoteRepository.GetRandomQuoteAsync(guildId, resolvedUser.Username);
+                else
+                    quote = await _quoteRepository.GetRandomQuoteAsync(guildId, quoteSearch);
             }
 
             if (quote == null)
