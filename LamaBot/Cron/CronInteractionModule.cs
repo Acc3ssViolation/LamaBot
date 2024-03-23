@@ -23,6 +23,7 @@ namespace LamaBot.Quotes
         [SlashCommand("add", "Add a new cron message")]
         public async Task AddMessageAsync(
             [Summary("channel", "The channel in which to schedule the message")] IGuildChannel channel,
+            [Summary("id", "The id of the message, used to refer to it later")] string id,
             [Summary("schedule", "Scheduling, cron syntax")]string schedule,
             [Summary("message", "The message to output")] string message
             )
@@ -44,11 +45,11 @@ namespace LamaBot.Quotes
 
             try
             {
-                var cronMessage = new CronMessage(guildId.Value, channel.Id, 0, scheduleExpression, message);
+                var cronMessage = new CronMessage(guildId.Value, channel.Id, id, scheduleExpression, message);
                 cronMessage = await _cronRepository.AddMessageAsync(cronMessage);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
-                    msg.Content = $"Added cron message {cronMessage.Id}";
+                    msg.Content = $"Added cron message `{cronMessage.Id}`";
                 });
             }
             catch (Exception ex)
@@ -59,9 +60,43 @@ namespace LamaBot.Quotes
         }
 
         [RequireUserPermission(GuildPermission.ManageMessages)]
+        [SlashCommand("list", "List all configured cron messages")]
+        public async Task ListMessagesAsync()
+        {
+            var guildId = Context.Interaction.GuildId;
+            if (!guildId.HasValue)
+            {
+                await RespondAsync("This command only be run in a server");
+                return;
+            }
+
+            await DeferAsync();
+
+            try
+            {
+                var messages = await _cronRepository.GetMessagesAsync(guildId.Value);
+                // TODO: There is a max of 25 fields we can output in a single Embed, make sure we don't go over that
+                await ModifyOriginalResponseAsync((msg) =>
+                {
+                    var embed = new EmbedBuilder()
+                        .WithTitle("Configured messages");
+                    foreach (var message in messages)
+                        embed.AddField(message.Id, $"<#{message.ChannelId}> `{message.Schedule}` \"{message.Message}\"");
+
+                    msg.Embed = embed.Build();
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete cron message");
+                await this.OnDeferredErrorAsync(ex).ConfigureAwait(false);
+            }
+        }
+
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [SlashCommand("delete", "Delete a cron message")]
         public async Task DeleteMessageAsync(
-            [Summary("id", "The id of the message to delete")] int id
+            [Summary("id", "The id of the message to delete")] string id
             )
         {
             var guildId = Context.Interaction.GuildId;
@@ -79,9 +114,9 @@ namespace LamaBot.Quotes
                 await ModifyOriginalResponseAsync((msg) =>
                 {
                     if (deleted)
-                        msg.Content = $"Deleted cron message {id}";
+                        msg.Content = $"Deleted cron message `{id}`";
                     else
-                        msg.Content = $"Could not find cron message {id}";
+                        msg.Content = $"Could not find cron message `{id}`";
                 });
             }
             catch (Exception ex)

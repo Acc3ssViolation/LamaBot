@@ -7,6 +7,8 @@ namespace LamaBot.Cron
 {
     internal class CronRepository : ICronRepository
     {
+        private const int MaxMessagesPerGuild = 16;
+
         private readonly Func<ApplicationDbContext> _dbContextFactory;
         private readonly ILogger<CronRepository> _logger;
 
@@ -20,17 +22,24 @@ namespace LamaBot.Cron
 
         public async Task<CronMessage> AddMessageAsync(CronMessage message, CancellationToken cancellationToken = default)
         {
-            if (message.Id != 0)
-                throw new ArgumentException("Message id should be 0", nameof(message));
+            var normalId = NormalizeId(message.Id);
+            if (string.IsNullOrWhiteSpace(normalId))
+                throw new ArgumentException("Message id should not be empty", nameof(message));
 
             using var dbContext = _dbContextFactory();
 
             var messageCount = await dbContext.CronMessages.AsNoTracking().OfGuild(message.GuildId).CountAsync(cancellationToken).ConfigureAwait(false);
-            var messageNumber = messageCount == 0 ? 0 : await dbContext.CronMessages.AsNoTracking().OfGuild(message.GuildId).MaxAsync(q => q.Id, cancellationToken).ConfigureAwait(false);
-            var dbMessage = new DbCronMessage
+            if (messageCount >= MaxMessagesPerGuild)
+                throw new ArgumentException("Cannot add more messages for this guild", nameof(message));
+
+            var dbMessage = await dbContext.CronMessages.AsNoTracking().OfGuild(message.GuildId).Where(m => m.Id == normalId).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            if (dbMessage != null)
+                throw new ArgumentException($"Message with id '{normalId}' already exists", nameof(message));
+
+            dbMessage = new DbCronMessage
             {
                 GuildId = message.GuildId,
-                Id = messageNumber + 1,
+                Id = normalId,
             };
             FromModel(dbMessage, message);
             dbContext.CronMessages.Add(dbMessage);
@@ -39,8 +48,9 @@ namespace LamaBot.Cron
             return ToModel(dbMessage);
         }
 
-        public async Task<bool> DeleteMessageAsync(ulong guildId, int messageId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteMessageAsync(ulong guildId, string messageId, CancellationToken cancellationToken = default)
         {
+            messageId = NormalizeId(messageId);
             using var dbContext = _dbContextFactory();
             var count = await dbContext.CronMessages.Where(q => q.GuildId == guildId && q.Id == messageId).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             if (count > 0)
@@ -75,6 +85,9 @@ namespace LamaBot.Cron
                 _logger.LogError(ex, "Exception in MessagesUpdated handler");
             }
         }
+
+        private static string NormalizeId(string id)
+            => id.Trim().Replace(' ', '-').ToLowerInvariant();
 
         private static void FromModel(DbCronMessage dbMessage, CronMessage model)
         {

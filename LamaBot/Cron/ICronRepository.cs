@@ -8,6 +8,6 @@
 
         Task<CronMessage> AddMessageAsync(CronMessage message, CancellationToken cancellationToken = default);
 
-        Task<bool> DeleteMessageAsync(ulong guildId, int messageId, CancellationToken cancellationToken = default);
+        Task<bool> DeleteMessageAsync(ulong guildId, string messageId, CancellationToken cancellationToken = default);
     }
 }

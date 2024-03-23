@@ -5,7 +5,7 @@ namespace LamaBot.Database
     public class DbCronMessage
     {
         public ulong GuildId { get; set; }
-        public int Id { get; set; }
+        public string Id { get; set; }
         public ulong ChannelId { get; set; }
         public string Schedule { get; set; }
         public string Content { get; set; }

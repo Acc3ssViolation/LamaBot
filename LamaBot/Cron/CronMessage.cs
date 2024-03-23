@@ -2,5 +2,5 @@
 
 namespace LamaBot.Cron
 {
-    public record CronMessage(ulong GuildId, ulong ChannelId, int Id, CronExpression Schedule, string Message);
+    public record CronMessage(ulong GuildId, ulong ChannelId, string Id, CronExpression Schedule, string Message);
 }

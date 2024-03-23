@@ -72,11 +72,7 @@ namespace LamaBot.Cron
 
                         _logger.LogDebug("Waiting until {Time}", scheduleTime);
                         if (delay > TimeSpan.Zero)
-                        {
-                            if (delay.TotalMilliseconds > 4294967294)
-                                delay = TimeSpan.FromMilliseconds(4294967294);
-                            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                        }
+                            await DelayLong(delay, cancellationToken).ConfigureAwait(false);
 
                         // Run first group, do not allow cancellations during this process
                         foreach (var message in firstGroup)
@@ -93,6 +89,16 @@ namespace LamaBot.Cron
                 {
                 }
             }
+        }
+
+        private async Task DelayLong(TimeSpan timeSpan, CancellationToken cancellationToken)
+        {
+            while (timeSpan.TotalMilliseconds > 4294967294)
+            {
+                timeSpan = timeSpan - TimeSpan.FromMilliseconds(4294967294);
+                await Task.Delay(timeSpan, cancellationToken).ConfigureAwait(false);
+            }
+            await Task.Delay(timeSpan, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task ExecuteMessageAsync(CronMessage message)
