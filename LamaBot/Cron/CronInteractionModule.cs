@@ -1,6 +1,7 @@
 ﻿using Cronos;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using LamaBot.Cron;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,7 @@ namespace LamaBot.Quotes
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [SlashCommand("add", "Add a new cron message")]
         public async Task AddMessageAsync(
-            [Summary("channel", "The channel in which to schedule the message")] IGuildChannel channel,
+            [Summary("channel", "The channel in which to schedule the message")] SocketTextChannel channel,
             [Summary("id", "The id of the message, used to refer to it later")] string id,
             [Summary("schedule", "Scheduling, cron syntax")]string schedule,
             [Summary("message", "The message to output")] string message
