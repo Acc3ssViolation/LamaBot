@@ -14,9 +14,8 @@ namespace LamaBot
         {
             _logger = logger;
         }
-
-        [RequireOwner]
-        [SlashCommand("status", "Get info about the bot status")]
+        
+        [SlashCommand("about", "Get info about the bot status")]
         public async Task GetStatusAsync()
         {
             var embed = new EmbedBuilder()
@@ -24,7 +23,8 @@ namespace LamaBot
                 .WithTitle("Bot info")
                 .WithFields(
                     new EmbedFieldBuilder().WithName("Version").WithValue(GetVersion()),
-                    new EmbedFieldBuilder().WithName("Uptime").WithValue(GetUptime())
+                    new EmbedFieldBuilder().WithName("Uptime").WithValue(GetUptime()),
+                    new EmbedFieldBuilder().WithName("GitHub").WithValue("https://github.com/Acc3ssViolation/LamaBot")
                 )
                 .WithCurrentTimestamp()
                 .Build();

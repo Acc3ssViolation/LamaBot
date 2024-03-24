@@ -8,6 +8,8 @@
 
         Task<Quote> AddQuoteAsync(Quote quote, CancellationToken cancellationToken = default);
 
+        Task InsertQuoteAsync(Quote quote, CancellationToken cancellationToken = default);
+
         Task<bool> DeleteQuoteAsync(ulong guildId, int id, CancellationToken cancellationToken = default);
 
         Task<IReadOnlyList<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default);

@@ -2,7 +2,7 @@
 
 namespace LamaBot
 {
-    internal interface IDiscordFacade
+    public interface IDiscordFacade
     {
         DiscordSocketClient Client { get; }
         ulong? TestGuild { get; }

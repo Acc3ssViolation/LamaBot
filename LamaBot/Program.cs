@@ -40,6 +40,7 @@ namespace LamaBot
                         .AddDatabase(hostContext.Configuration.GetSection("Database"))
                         .AddQuotes()
                         .AddCronMessages()
+                        .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()
                         .AddSingleton<DiscordService>()

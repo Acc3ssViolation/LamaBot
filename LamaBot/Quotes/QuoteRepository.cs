@@ -48,7 +48,7 @@ namespace LamaBot.Quotes
         {
             if (quote.Id != 0)
                 throw new ArgumentException("Quote id should be 0", nameof(quote));
-            
+
             using var dbContext = _dbContextFactory();
 
             // Two datbase queries to get the amount of quotes, great
@@ -63,6 +63,24 @@ namespace LamaBot.Quotes
             dbContext.Quotes.Add(dbQuote);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return ToModel(dbQuote);
+        }
+
+        public async Task InsertQuoteAsync(Quote quote, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbQuote = await dbContext.Quotes.OfGuild(quote.GuildId).SingleOrDefaultAsync(q => q.Id == quote.Id, cancellationToken).ConfigureAwait(false);
+            if (dbQuote == null)
+            {
+                dbQuote = new DbQuote
+                {
+                    GuildId = quote.GuildId,
+                    Id = quote.Id,
+                };
+                dbContext.Quotes.Add(dbQuote);
+            }
+            FromModel(dbQuote, quote);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<bool> DeleteQuoteAsync(ulong guildId, int id, CancellationToken cancellationToken = default)
