@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace LamaBot.Quotes
 {
@@ -7,7 +8,10 @@ namespace LamaBot.Quotes
         public static IServiceCollection AddQuotes(this IServiceCollection serviceCollection)
         {
             return serviceCollection
-                .AddSingleton<IQuoteRepository, QuoteRepository>();
+                .AddSingleton<IQuoteRepository, QuoteRepository>()
+                .AddSingleton<QuoteReactionHook>()
+                .AddSingleton<IHostedService>(sp => sp.GetRequiredService<QuoteReactionHook>())
+                .AddSingleton<IReactionHook>(sp => sp.GetRequiredService<QuoteReactionHook>());
         }
     }
 }

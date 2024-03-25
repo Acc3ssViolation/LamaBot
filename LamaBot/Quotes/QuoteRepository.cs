@@ -51,6 +51,11 @@ namespace LamaBot.Quotes
 
             using var dbContext = _dbContextFactory();
 
+            // Make sure this message is not quoted already
+            var quoteExists = await dbContext.Quotes.AsNoTracking().OfGuild(quote.GuildId).Where(q => q.MessageId == quote.MessageId && q.ChannelId == quote.ChannelId).AnyAsync(cancellationToken).ConfigureAwait(false);
+            if (quoteExists)
+                throw new ArgumentException("Message has already been quoted");
+
             // Two datbase queries to get the amount of quotes, great
             var quoteCount = await dbContext.Quotes.AsNoTracking().OfGuild(quote.GuildId).CountAsync(cancellationToken).ConfigureAwait(false);
             var quoteNumber = quoteCount == 0 ? 0 : await dbContext.Quotes.AsNoTracking().OfGuild(quote.GuildId).MaxAsync(q => q.Id, cancellationToken).ConfigureAwait(false);
@@ -113,7 +118,7 @@ namespace LamaBot.Quotes
 
         private static Quote ToModel(DbQuote quote)
         {
-            return new Quote(quote.GuildId, quote.Id, quote.UserId, quote.UserName, quote.ChannelId, quote.ChannelName, quote.Content, quote.MessageId, quote.TimestampUtc);
+            return new Quote(quote.GuildId, quote.Id, quote.UserId, quote.UserName, quote.ChannelId, quote.ChannelName, quote.Content, quote.MessageId, DateTime.SpecifyKind(quote.TimestampUtc, DateTimeKind.Utc));
         }
     }
 

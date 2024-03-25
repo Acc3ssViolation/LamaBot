@@ -208,7 +208,7 @@ namespace LamaBot.Quotes
                 quote = await _quoteRepository.AddQuoteAsync(quote).ConfigureAwait(false);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
-                    msg.Content = $"Added quote {quote.Id}";
+                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id}";
                 });
             }
             catch (Exception ex)
@@ -240,7 +240,7 @@ namespace LamaBot.Quotes
                 quote = await _quoteRepository.AddQuoteAsync(quote).ConfigureAwait(false);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
-                    msg.Content = $"Added quote {quote.Id}";
+                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id}";
                 });
             }
             catch (Exception ex)

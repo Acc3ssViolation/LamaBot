@@ -79,6 +79,14 @@ namespace LamaBot
 
             _logger.LogDebug("Text commands registered!");
 
+            _discord.Client.ReactionAdded += async (message, channel, reaction) =>
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var hooks = scope.ServiceProvider.GetServices<IReactionHook>();
+                foreach (var hook in hooks)
+                    await hook.OnReactionAsync(message, channel, reaction);
+            };
+
             await stoppingToken.UntilCancelledNoThrow().ConfigureAwait(false);
             _logger.LogDebug("Stopped command service");
         }

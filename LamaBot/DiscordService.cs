@@ -22,6 +22,9 @@ namespace LamaBot
             {
                 UseInteractionSnowflakeDate = false,
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.GuildMembers,
+                AlwaysDownloadUsers = true,
+                // TODO: Reduce this if memory usage becomes too high
+                MessageCacheSize = 32,
             });
             _ready = new TaskCompletionSource();
         }
@@ -53,7 +56,7 @@ namespace LamaBot
 
                 _client.GuildAvailable += (guild) =>
                 {
-                    _client.DownloadUsersAsync([guild]).LogFailure();
+                    _logger.LogInformation("Guild became available: {Guild}", guild);
                     return Task.CompletedTask;
                 };
 
