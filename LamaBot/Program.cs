@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using LamaBot.Quotes;
 using LamaBot.Database;
 using LamaBot.Cron;
+using LamaBot.Servers;
 
 namespace LamaBot
 {
@@ -40,6 +41,7 @@ namespace LamaBot
                         .AddDatabase(hostContext.Configuration.GetSection("Database"))
                         .AddQuotes()
                         .AddCronMessages()
+                        .AddServerSettings()
                         .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()

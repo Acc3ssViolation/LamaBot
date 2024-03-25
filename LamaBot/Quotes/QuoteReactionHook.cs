@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using LamaBot.Servers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
@@ -14,13 +15,15 @@ namespace LamaBot.Quotes
 
         private readonly Channel<ReactionJob> _reactionQueue;
         private readonly IQuoteRepository _quoteRepository;
+        private readonly IServerSettings _serverSettings;
         private readonly IDiscordFacade _discord;
         private readonly ILogger<QuoteReactionHook> _logger;
 
-        public QuoteReactionHook(IQuoteRepository quoteRepository, IDiscordFacade discordFacade, ILogger<QuoteReactionHook> logger)
+        public QuoteReactionHook(IQuoteRepository quoteRepository, IServerSettings serverSettings, IDiscordFacade discordFacade, ILogger<QuoteReactionHook> logger)
         {
             _quoteRepository = quoteRepository ?? throw new ArgumentNullException(nameof(quoteRepository));
             _discord = discordFacade ?? throw new ArgumentNullException(nameof(discordFacade));
+            _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _reactionQueue = Channel.CreateBounded<ReactionJob>(new BoundedChannelOptions(10)
             {
@@ -46,6 +49,10 @@ namespace LamaBot.Quotes
 
                     var channel = await _discord.Client.GetChannelAsync(job.ChannelId).ConfigureAwait(false);
                     if (channel is not SocketTextChannel textChannel)
+                        continue;
+
+                    var enabled = await _serverSettings.GetBoolAsync(textChannel.Guild.Id, QuoteSettings.QuoteWithReactionEnabled, false, stoppingToken).ConfigureAwait(false);
+                    if (!enabled)
                         continue;
 
                     var message = await textChannel.GetMessageAsync(job.MessageId).ConfigureAwait(false);
