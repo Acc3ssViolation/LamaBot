@@ -5,11 +5,13 @@ namespace LamaBot.Quotes
 {
     public class QuoteTextModule : ModuleBase<SocketCommandContext>
     {
+        private readonly IDiscordFacade _discord;
         private readonly IQuoteRepository _quoteRepository;
         private readonly ILogger<QuoteTextModule> _logger;
 
-        public QuoteTextModule(IQuoteRepository quoteRepository, ILogger<QuoteTextModule> logger)
+        public QuoteTextModule(IDiscordFacade discord, IQuoteRepository quoteRepository, ILogger<QuoteTextModule> logger)
         {
+            _discord = discord ?? throw new ArgumentNullException(nameof(discord));
             _quoteRepository = quoteRepository ?? throw new ArgumentNullException(nameof(quoteRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -20,6 +22,10 @@ namespace LamaBot.Quotes
         public async Task GetQuoteAsync([Remainder] string? quoteSearch = null)
         {
             var guildId = Context.Guild.Id;
+
+            // TODO: This should be moved up the stack
+            if (_discord.TestGuild.HasValue && guildId != _discord.TestGuild)
+                return;
 
             Quote? quote = null;
             if (string.IsNullOrWhiteSpace(quoteSearch))

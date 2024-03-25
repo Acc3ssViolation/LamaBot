@@ -51,6 +51,10 @@ namespace LamaBot.Quotes
                     if (channel is not SocketTextChannel textChannel)
                         continue;
 
+                    // TODO: This should be moved up the stack
+                    if (_discord.TestGuild.HasValue && textChannel.Guild.Id != _discord.TestGuild)
+                        return;
+
                     var enabled = await _serverSettings.GetBoolAsync(textChannel.Guild.Id, QuoteSettings.QuoteWithReactionEnabled, false, stoppingToken).ConfigureAwait(false);
                     if (!enabled)
                         continue;
