@@ -38,6 +38,9 @@ namespace LamaBot
 
             _discord.Client.InteractionCreated += async (x) =>
             {
+                if (_discord.TestGuild.HasValue && x.GuildId.HasValue && x.GuildId != _discord.TestGuild)
+                    return;
+
                 var ctx = new SocketInteractionContext(_discord.Client, x);
                 await interactionService.ExecuteCommandAsync(ctx, _serviceProvider);
             };
