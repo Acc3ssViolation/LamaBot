@@ -1,4 +1,6 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
+using System.Text;
 
 namespace LamaBot.Servers
 {
@@ -52,6 +54,46 @@ namespace LamaBot.Servers
             await ModifyOriginalResponseAsync((msg) =>
             {
                 msg.Content = $"Setting `{setting}` is `{value ?? "null"}`";
+            });
+        }
+
+        [RequireOwner]
+        [SlashCommand("list", "List setting values")]
+        public async Task ListSettingsAsync()
+        {
+            await DeferAsync(true);
+            var settings = await _serverSettings.GetSettingsAsync();
+
+            await ModifyOriginalResponseAsync((msg) =>
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("Configured settings");
+                sb.AppendLine("```");
+                foreach (var setting in settings)
+                    sb.AppendLine($"<{setting.GuildId}> <{setting.Code}> <{setting.Value}>");
+                sb.AppendLine("```");
+                msg.Content = sb.ToString();
+            });
+        }
+
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        [SlashCommand("prefix", "Set the server's command prefix")]
+        public async Task SetCommandPrefixAsync(
+            [Summary("prefix", "The prefix to use before a command")] string prefix
+        )
+        {
+            prefix = prefix.Trim();
+            if (string.IsNullOrWhiteSpace(prefix) || prefix.Length > 1)
+            {
+                await RespondAsync($"Prefix `{prefix}` is invalid", ephemeral: true);
+                return;
+            }
+
+            await DeferAsync();
+            await _serverSettings.SetCommandPrefixAsync(Context.Guild.Id, prefix[0]);
+            await ModifyOriginalResponseAsync((msg) =>
+            {
+                msg.Content = $"Text commands now use `{prefix}` (e.g. `{prefix}quote`)";
             });
         }
     }

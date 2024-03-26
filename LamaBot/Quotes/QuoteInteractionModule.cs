@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LamaBot.Servers;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Text.Json;
@@ -191,6 +192,56 @@ namespace LamaBot.Quotes
             }
         }
 
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        [Group("emoji", "Configure the emoji reaction quote thing")]
+        public class QuoteEmojiInteractionModule : InteractionModuleBase
+        {
+            private readonly IServerSettings _serverSettings;
+
+            public QuoteEmojiInteractionModule(IServerSettings serverSettings)
+            {
+                _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
+            }
+
+            [SlashCommand("get", "Get the currently configured emoji")]
+            public async Task GetEmojiAsync()
+            {
+                var emoji = await _serverSettings.GetSettingAsync(Context.Guild.Id, QuoteSettings.QuoteEmoji);
+                if (emoji == null)
+                {
+                    await RespondAsync("Reaction based quoting is disabled on this server");
+                    return;
+                }
+
+                await RespondAsync($"Reacting with {emoji} will trigger a quote");
+            }
+
+            [SlashCommand("set", "Set the emoji")]
+            public async Task GetEmojiAsync(
+                [Summary("emoji", "The emoji to trigger a quote with")] string emoji
+                )
+            {
+                await DeferAsync();
+                await _serverSettings.SetSettingAsync(Context.Guild.Id, QuoteSettings.QuoteEmoji, emoji);
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    msg.Content = $"Reacting with {emoji} will trigger a quote";
+                });
+            }
+
+            [SlashCommand("clear", "Disable quoting via emoji")]
+            public async Task ClearEmojiAsync()
+            {
+                await DeferAsync();
+                await _serverSettings.ClearAsync(Context.Guild.Id, QuoteSettings.QuoteEmoji);
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    msg.Content = "Reaction based quoting is now disabled on this server";
+                });
+            }
+        }
+
+
         [MessageCommand("Add quote")]
         public async Task QuoteMessageAsync(IMessage message)
         {
@@ -208,7 +259,7 @@ namespace LamaBot.Quotes
                 quote = await _quoteRepository.AddQuoteAsync(quote).ConfigureAwait(false);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
-                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id}";
+                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id} {quote.GetMessageLink()}";
                 });
             }
             catch (Exception ex)
@@ -240,7 +291,7 @@ namespace LamaBot.Quotes
                 quote = await _quoteRepository.AddQuoteAsync(quote).ConfigureAwait(false);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
-                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id}";
+                    msg.Content = $"<@{Context.User.Id}> added quote #{quote.Id} {quote.GetMessageLink()}";
                 });
             }
             catch (Exception ex)

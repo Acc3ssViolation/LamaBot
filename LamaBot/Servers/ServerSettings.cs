@@ -16,6 +16,18 @@ namespace LamaBot.Servers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        public async ValueTask<IReadOnlyList<ServerSetting>> GetSettingsAsync(CancellationToken cancellationToken = default)
+        {
+            using var l = await _settingsLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            var result = new List<ServerSetting>();
+            foreach (var guildSettings in _settings)
+            {
+                foreach (var setting in guildSettings.Value)
+                    result.Add(new ServerSetting(guildSettings.Key, setting.Key, setting.Value));
+            }
+            return result;
+        }
+
         public async ValueTask<string?> GetSettingAsync(ulong guildId, string setting, CancellationToken cancellationToken = default)
         {
             using var l = await _settingsLock.WaitAsync(cancellationToken).ConfigureAwait(false);

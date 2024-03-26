@@ -1,6 +1,7 @@
 ﻿using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LamaBot.Servers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,13 +14,15 @@ namespace LamaBot
         private readonly ILoggerFactory _loggerFactory;
         private readonly IDiscordFacade _discord;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServerSettings _serverSettings;
 
-        public DiscordCommandService(ILogger<DiscordCommandService> logger, ILoggerFactory loggerFactory, IDiscordFacade discord, IServiceProvider serviceProvider)
+        public DiscordCommandService(ILogger<DiscordCommandService> logger, ILoggerFactory loggerFactory, IDiscordFacade discord, IServiceProvider serviceProvider, IServerSettings serverSettings)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             _discord = discord ?? throw new ArgumentNullException(nameof(discord));
-            _serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,7 +41,8 @@ namespace LamaBot
 
             _discord.Client.InteractionCreated += async (x) =>
             {
-                if (_discord.TestGuild.HasValue && x.GuildId.HasValue && x.GuildId != _discord.TestGuild)
+                // Only handle interactions from guilds that are enabled
+                if (x.GuildId.HasValue && !await _serverSettings.IsServerEnabledAsync(x.GuildId.Value))
                     return;
 
                 var ctx = new SocketInteractionContext(_discord.Client, x);
@@ -61,13 +65,22 @@ namespace LamaBot
 
             _discord.Client.MessageReceived += async (x) =>
             {
-                if (x is not SocketUserMessage userMessage)
+                if (x is not SocketUserMessage userMessage || userMessage.Author.IsBot)
                     return;
 
+                // If this is a guild message we need to check if we're supposed to handle commands from it
+                var prefix = '!';
+                if (userMessage.Channel is SocketGuildChannel channel)
+                {
+                    if (!await _serverSettings.IsServerEnabledAsync(channel.Guild.Id))
+                        return;
+
+                    prefix = await _serverSettings.GetCommandPrefixAsync(channel.Guild.Id);
+                }
+
                 var argPos = 0;
-                // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-                if (!userMessage.HasCharPrefix('!', ref argPos) ||
-                    userMessage.Author.IsBot)
+                // Determine if the message is a command based on the prefix
+                if (!userMessage.HasCharPrefix(prefix, ref argPos))
                     return;
 
                 var ctx = new SocketCommandContext(_discord.Client, userMessage);
@@ -81,10 +94,22 @@ namespace LamaBot
 
             _discord.Client.ReactionAdded += async (message, channel, reaction) =>
             {
+                // Don't respond to bots (including our own emoji based responses)
+                if (reaction.User.Value.IsBot)
+                    return;
+
+                // We only care about guilds
+                if ((await channel.GetOrDownloadAsync()) is not SocketGuildChannel guildChannel)
+                    return;
+
+                // Guild must be enabled on this instance
+                if (!await _serverSettings.IsServerEnabledAsync(guildChannel.Guild.Id))
+                    return;
+
                 using var scope = _serviceProvider.CreateScope();
                 var hooks = scope.ServiceProvider.GetServices<IReactionHook>();
                 foreach (var hook in hooks)
-                    await hook.OnReactionAsync(message, channel, reaction);
+                    await hook.OnReactionAsync(message, guildChannel, reaction);
             };
 
             await stoppingToken.UntilCancelledNoThrow().ConfigureAwait(false);

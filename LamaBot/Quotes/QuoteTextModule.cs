@@ -23,10 +23,6 @@ namespace LamaBot.Quotes
         {
             var guildId = Context.Guild.Id;
 
-            // TODO: This should be moved up the stack
-            if (_discord.TestGuild.HasValue && guildId != _discord.TestGuild)
-                return;
-
             Quote? quote = null;
             if (string.IsNullOrWhiteSpace(quoteSearch))
             {
