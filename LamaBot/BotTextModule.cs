@@ -1,18 +1,25 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
+using LamaBot.Database;
+using LamaBot.Servers;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
 
-namespace LamaBot.Servers
+namespace LamaBot
 {
-    [Group("server")]
-    public class ServerTextModule : ModuleBase<SocketCommandContext>
+    [Group("bot")]
+    public class BotTextModule : ModuleBase<SocketCommandContext>
     {
+        private readonly Func<ApplicationDbContext> _dbContextFactory;
         private readonly IServerSettings _serverSettings;
-        private readonly ILogger<ServerTextModule> _logger;
+        private readonly ILogger<BotTextModule> _logger;
 
-        public ServerTextModule(IServerSettings serverSettings, ILogger<ServerTextModule> logger)
+        public BotTextModule(Func<ApplicationDbContext> dbContextFactory, IServerSettings serverSettings, ILogger<BotTextModule> logger)
         {
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -75,6 +82,33 @@ namespace LamaBot.Servers
                 }
             }
             await ReplyAsync(sb.ToString());
+        }
+
+        [RequireOwner]
+        [Command("backup")]
+        [Summary("Create a backup of an instance's database")]
+        public async Task BackupAsync(string instance)
+        {
+            if (instance != GetInstanceName())
+                return;
+
+            var msg = await ReplyAsync("Backing up database...");
+
+            var tempFile = Path.GetTempFileName();
+            using (var backup = new SqliteConnection($"Data Source={tempFile}"))
+            {
+                using var dbContext = _dbContextFactory();
+                var databaseConnection = (SqliteConnection)dbContext.Database.GetDbConnection();
+                await databaseConnection.OpenAsync();
+                databaseConnection.BackupDatabase(backup);
+                SqliteConnection.ClearPool(backup);
+            }
+
+            await msg.ModifyAsync(msg =>
+            {
+                msg.Content = "Backed up database, see attached file";
+                msg.Attachments = new FileAttachment[] { new(tempFile, $"backup-{GetInstanceName()}-{DateTime.UtcNow:s}.db") };
+            });
         }
 
         private static string GetInstanceName()
