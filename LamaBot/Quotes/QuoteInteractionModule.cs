@@ -300,6 +300,49 @@ namespace LamaBot.Quotes
                 await this.OnDeferredErrorAsync(ex).ConfigureAwait(false);
             }
         }
+
+        [SlashCommand("search", "Hey Google!")]
+        public async Task SearchQuotesAsync(
+            [Summary("author", "Who said the thing?")] SocketGuildUser? user = null,
+            [Summary("content", "What was it about?")] string? content = null)
+        {
+            var guildId = Context.Interaction.GuildId;
+            if (!guildId.HasValue)
+            {
+                await RespondAsync("This command only be run in a server");
+                return;
+            }
+
+            await DeferAsync();
+
+            // TODO: Move this operation to the database, it is probably faster
+            IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(guildId.Value);
+            if (user != null)
+                quotes = quotes.Where(q => q.UserId == user.Id || q.UserName == user.Username);
+            if (content != null)
+                quotes = quotes.Where(q => q.Content.Contains(content, StringComparison.OrdinalIgnoreCase));
+            var filteredQuotes = quotes.ToList();
+
+            await ModifyOriginalResponseAsync((msg) =>
+            {
+                if (filteredQuotes.Count > 25)
+                {
+                    msg.Content = $"Found {filteredQuotes.Count} quotes, please narrow down your search";
+                    return;
+                }
+
+                var embed = new EmbedBuilder()
+                    .WithTitle($"Found {filteredQuotes.Count} quotes");
+                if (filteredQuotes.Count == 0)
+                    embed.WithDescription("No quotes found");
+                else
+                    foreach (var quote in filteredQuotes)
+                        embed.AddField($"#{quote.Id}", $"{quote.Content}\n- {quote.GetQuoteAuthor()} {quote.GetMessageLink()}");
+
+                msg.Embed = embed.Build();
+            });
+
+        }
     }
 
 }

@@ -1,5 +1,7 @@
 ﻿using Discord;
 using System.Text;
+using System.Threading.Channels;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LamaBot.Quotes
 {
@@ -15,7 +17,7 @@ namespace LamaBot.Quotes
             if (quote.UserId != 0)
                 text.Append("<@").Append(quote.UserId).Append('>');
             else
-                text.Append(quote.UserName);
+                text.Append(quote.GetQuoteAuthor());
 
             text.Append(' ');
             text.Append(quote.GetMessageLink());
@@ -26,6 +28,17 @@ namespace LamaBot.Quotes
                 .WithDescription(text.ToString())
                 .Build();
             return embed;
+        }
+
+        public static string GetMessageLink(this Quote quote)
+            => $"[(Jump)](https://discord.com/channels/{quote.GuildId}/{quote.ChannelId}/{quote.MessageId})";
+
+        public static string GetQuoteAuthor(this Quote quote)
+        {
+            if (quote.UserId != 0)
+                return $"<@{quote.UserId}>";
+            else
+                return quote.UserName;
         }
     }
 }

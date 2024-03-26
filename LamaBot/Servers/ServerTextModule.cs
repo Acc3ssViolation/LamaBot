@@ -67,7 +67,11 @@ namespace LamaBot.Servers
                 {
                     sb.Append("`");
                     sb.Append(setting.GuildId);
-                    sb.AppendLine("`");
+                    sb.Append('`');
+                    var guild = Context.Client.Guilds.FirstOrDefault(g => g.Id == setting.GuildId);
+                    if (guild != null)
+                        sb.Append(' ').Append(guild.Name);
+                    sb.AppendLine();
                 }
             }
             await ReplyAsync(sb.ToString());
