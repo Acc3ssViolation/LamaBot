@@ -7,6 +7,7 @@ using LamaBot.Quotes;
 using LamaBot.Database;
 using LamaBot.Cron;
 using LamaBot.Servers;
+using LamaBot.Tunnel;
 
 namespace LamaBot
 {
@@ -14,17 +15,36 @@ namespace LamaBot
     {
         public static async Task Main(string[] args)
         {
-            using var host = CreateHostBuilder(args).Build();
+            using var app = CreateAppBuilder(args).Build();
 
-            await host.Services.GetRequiredService<DatabaseStorage>().InitializeAsync();
-            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+            await app.Services.GetRequiredService<DatabaseStorage>().InitializeAsync();
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
             TaskExtensions.Initialize(logger);
-            await host.RunAsync();
+
+            app.MapControllers();
+            
+            await app.RunAsync();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args)
+        public static WebApplicationBuilder CreateAppBuilder(string[] args)
         {
-            var builder = Host.CreateDefaultBuilder(args)
+            var builder = WebApplication.CreateBuilder(args);
+
+            builder.WebHost.UseKestrel(k =>
+            {
+                k.ListenLocalhost(80, o =>
+                {
+                    o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
+                });
+                k.ListenLocalhost(8080, o =>
+                {
+                    o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2;
+                });
+            });
+
+            builder.Services.AddControllers();
+
+            builder.Host
                 .UseSystemd()
                 .ConfigureAppConfiguration((hostContext, configuration) =>
                 {
@@ -42,6 +62,7 @@ namespace LamaBot
                         .AddQuotes()
                         .AddCronMessages()
                         .AddServerSettings()
+                        .AddWebSocketTunnel(hostContext.Configuration.GetSection("Tunnel"))
                         .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()

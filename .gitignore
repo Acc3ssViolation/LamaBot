@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /LamaBot/config.ini
+*.db
+/LamaBot/llama.db-shm
+/LamaBot/llama.db-shm
+/LamaBot/llama.db-wal
