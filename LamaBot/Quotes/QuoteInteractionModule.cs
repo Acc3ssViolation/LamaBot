@@ -263,7 +263,7 @@ namespace LamaBot.Quotes
                     return;
                 }
 
-                await RespondAsync($"The QOTD is send in <#{channelId}>");
+                await RespondAsync($"The QOTD is sent in <#{channelId}>");
             }
 
             [SlashCommand("set", "Set the QOTD channel")]
@@ -275,7 +275,7 @@ namespace LamaBot.Quotes
                 await _serverSettings.SetSettingAsync(Context.Guild.Id, QuoteSettings.QuoteOfTheDayChannel, channel.Id.ToString());
                 await ModifyOriginalResponseAsync(msg =>
                 {
-                    msg.Content = $"The QOTD is send in <#{channel.Id}>";
+                    msg.Content = $"The QOTD is sent in <#{channel.Id}>";
                 });
             }
 
