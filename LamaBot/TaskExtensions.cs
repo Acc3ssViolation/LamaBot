@@ -17,5 +17,13 @@ namespace LamaBot
                 _logger?.LogError(c.Exception, "Task failed");
             }, TaskContinuationOptions.NotOnRanToCompletion);
         }
+
+        public static void IgnoreExceptions(this Task task)
+        {
+            task.ContinueWith(c => {
+                _ = c.Exception;
+                _logger?.LogTrace("Ignored exception {Message}", c.Exception?.Message);
+            }, TaskContinuationOptions.NotOnRanToCompletion);
+        }
     }
 }
