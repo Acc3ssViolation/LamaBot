@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using LamaBot.Cron;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace LamaBot.Quotes
@@ -10,6 +11,7 @@ namespace LamaBot.Quotes
             return serviceCollection
                 .AddSingleton<IQuoteRepository, QuoteRepository>()
                 .AddSingleton<QuoteReactionHook>()
+                .AddSingleton<ICronActionProvider, QuoteOfTheDayActionProvider>()
                 .AddSingleton<IHostedService>(sp => sp.GetRequiredService<QuoteReactionHook>())
                 .AddSingleton<IReactionHook>(sp => sp.GetRequiredService<QuoteReactionHook>());
         }

@@ -7,7 +7,7 @@ namespace LamaBot.Quotes
 {
     internal static class QuoteInteractionExtensions
     {
-        public static Embed CreateEmbed(this Quote quote)
+        public static Embed CreateEmbed(this Quote quote, string? title = null)
         {
             var text = new StringBuilder()
                 .Append(quote.Content)
@@ -23,7 +23,7 @@ namespace LamaBot.Quotes
             text.Append(quote.GetMessageLink());
 
             var embed = new EmbedBuilder()
-                .WithTitle($"#{quote.Id}")
+                .WithTitle(title ?? $"#{quote.Id}")
                 .WithTimestamp(quote.TimestampUtc)
                 .WithDescription(text.ToString())
                 .Build();

@@ -5,6 +5,7 @@ using LamaBot.Servers;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Channels;
 
 namespace LamaBot.Quotes
 {
@@ -237,6 +238,55 @@ namespace LamaBot.Quotes
                 await ModifyOriginalResponseAsync(msg =>
                 {
                     msg.Content = "Reaction based quoting is now disabled on this server";
+                });
+            }
+        }
+
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        [Group("daily", "Configure the quote of the day")]
+        public class QuoteOfTheDayInteractionModule : InteractionModuleBase
+        {
+            private readonly IServerSettings _serverSettings;
+
+            public QuoteOfTheDayInteractionModule(IServerSettings serverSettings)
+            {
+                _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
+            }
+
+            [SlashCommand("get", "Get the currently configured QOTD channel")]
+            public async Task GetChannelAsync()
+            {
+                var channelId = await _serverSettings.GetSettingAsync(Context.Guild.Id, QuoteSettings.QuoteOfTheDayChannel);
+                if (channelId == null)
+                {
+                    await RespondAsync("The QOTD is disabled in this server");
+                    return;
+                }
+
+                await RespondAsync($"The QOTD is send in <#{channelId}>");
+            }
+
+            [SlashCommand("set", "Set the QOTD channel")]
+            public async Task SetChannelAsync(
+                [Summary("channel", "The channel in which to send the QOTD")] SocketTextChannel channel
+                )
+            {
+                await DeferAsync();
+                await _serverSettings.SetSettingAsync(Context.Guild.Id, QuoteSettings.QuoteOfTheDayChannel, channel.Id.ToString());
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    msg.Content = $"The QOTD is send in <#{channel.Id}>";
+                });
+            }
+
+            [SlashCommand("clear", "Disable the QOTD")]
+            public async Task ClearChannelAsync()
+            {
+                await DeferAsync();
+                await _serverSettings.ClearAsync(Context.Guild.Id, QuoteSettings.QuoteOfTheDayChannel);
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    msg.Content = "QOTD is now disabled on this server";
                 });
             }
         }
