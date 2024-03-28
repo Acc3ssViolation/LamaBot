@@ -105,7 +105,7 @@ namespace LamaBot.Tunnel
 
         private async Task BridgeAsync(BridgeCommand bridgeCommand, CancellationToken cancellationToken)
         {
-            _logger.LogCritical("Starting websocket tunnel {Command}", bridgeCommand);
+            _logger.LogInformation("Starting websocket tunnel {Command}", bridgeCommand);
 
             async Task CopyWebSocketToStream(WebSocket webSocket, Stream stream, CancellationToken cancellationToken)
             {
@@ -199,7 +199,7 @@ namespace LamaBot.Tunnel
                 if (webSocket.State == WebSocketState.Open)
                     await TryCloseAsync(webSocket, WebSocketCloseStatus.NormalClosure, "closed", cancellationToken).ConfigureAwait(false);
 
-                _logger.LogCritical("Finished websocket tunnel {Command}", bridgeCommand);
+                _logger.LogInformation("Finished websocket tunnel {Command}", bridgeCommand);
             }
         }
     }

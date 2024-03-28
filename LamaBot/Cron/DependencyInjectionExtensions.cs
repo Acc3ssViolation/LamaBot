@@ -1,7 +1,4 @@
-﻿using LamaBot.Quotes;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace LamaBot.Cron
+﻿namespace LamaBot.Cron
 {
     internal static class DependencyInjectionExtensions
     {
@@ -9,6 +6,7 @@ namespace LamaBot.Cron
         {
             return serviceCollection
                 .AddSingleton<ICronRepository, CronRepository>()
+                .AddSingleton<ICronActionProvider, CronMessageActionProvider>()
                 .AddHostedService<CronService>();
         }
     }

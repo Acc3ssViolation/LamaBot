@@ -1,21 +1,17 @@
-﻿using Discord;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
-namespace LamaBot.Cron
+﻿namespace LamaBot.Cron
 {
     internal class CronService : BackgroundService
     {
-        private readonly ICronRepository _cronRepository;
+        private readonly IReadOnlyList<ICronActionProvider> _actionProviders;
         private readonly IDiscordFacade _discordFacade;
         private readonly ILogger<CronService> _logger;
 
         private CancellationTokenSource? _cts;
         private readonly object _lock = new object();
 
-        public CronService(ICronRepository cronRepository, IDiscordFacade discordFacade, ILogger<CronService> logger)
+        public CronService(IEnumerable<ICronActionProvider> actionProviders, IDiscordFacade discordFacade, ILogger<CronService> logger)
         {
-            _cronRepository = cronRepository ?? throw new ArgumentNullException(nameof(cronRepository));
+            _actionProviders = actionProviders.ToList();
             _discordFacade = discordFacade ?? throw new ArgumentNullException(nameof(discordFacade));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -24,29 +20,40 @@ namespace LamaBot.Cron
         {
             await _discordFacade.WaitUntilReadyAsync(stoppingToken);
 
-            _cronRepository.MessagesUpdated += OnMessagesUpdated;
+            foreach (var actionProvider in _actionProviders)
+                actionProvider.ActionsUpdated += OnActionsUpdated;
 
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                _logger.LogDebug("Fetching cron messages from repository");
-                var messages = await _cronRepository.GetMessagesAsync(cancellationToken: stoppingToken);
-
-                lock (_lock)
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    if (_cts != null)
-                    {
-                        _cts.Dispose();
-                        _cts = null;
-                    }
-                    _cts = new CancellationTokenSource();
-                }
+                    _logger.LogDebug("Fetching cron messages from repository");
+                    IEnumerable<ICronAction> actions = Array.Empty<ICronAction>();
+                    foreach (var actionProvider in _actionProviders)
+                        actions = actions.Concat(await actionProvider.GetActionsAsync(stoppingToken).ConfigureAwait(false));
 
-                using var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, _cts.Token);
-                await RunSchedulesAsync(messages, combinedSource.Token).ConfigureAwait(false);
+                    lock (_lock)
+                    {
+                        if (_cts != null)
+                        {
+                            _cts.Dispose();
+                            _cts = null;
+                        }
+                        _cts = new CancellationTokenSource();
+                    }
+
+                    using var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, _cts.Token);
+                    await RunSchedulesAsync(actions, combinedSource.Token).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                foreach (var actionProvider in _actionProviders)
+                    actionProvider.ActionsUpdated -= OnActionsUpdated;
             }
         }
 
-        private void OnMessagesUpdated()
+        private void OnActionsUpdated()
         {
             lock (_lock)
             {
@@ -54,7 +61,7 @@ namespace LamaBot.Cron
             }
         }
 
-        private async Task RunSchedulesAsync(IReadOnlyList<CronMessage> messages, CancellationToken cancellationToken)
+        private async Task RunSchedulesAsync(IEnumerable<ICronAction> actions, CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -63,7 +70,7 @@ namespace LamaBot.Cron
                     // TODO: We should actually make sure this is run in the guild's timezone, but whatever
                     var now = DateTimeOffset.Now;
                     var timezone = TimeZoneInfo.Local;
-                    var scheduleGroups = messages.GroupBy(m => m.Schedule.GetNextOccurrence(now, timezone)).Where(g => g.Key.HasValue).OrderBy(g => g.Key).ToList();
+                    var scheduleGroups = actions.GroupBy(m => m.Schedule.GetNextOccurrence(now, timezone)).Where(g => g.Key.HasValue).OrderBy(g => g.Key).ToList();
                     var firstGroup = scheduleGroups.FirstOrDefault();
                     if (firstGroup != null)
                     {
@@ -75,8 +82,8 @@ namespace LamaBot.Cron
                             await DelayLong(delay, cancellationToken).ConfigureAwait(false);
 
                         // Run first group, do not allow cancellations during this process
-                        foreach (var message in firstGroup)
-                            await ExecuteMessageAsync(message).ConfigureAwait(false);
+                        foreach (var action in firstGroup)
+                            await ExecuteActionAsync(action).ConfigureAwait(false);
                     }
                     else
                     {
@@ -101,22 +108,15 @@ namespace LamaBot.Cron
             await Task.Delay(timeSpan, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task ExecuteMessageAsync(CronMessage message)
+        private async Task ExecuteActionAsync(ICronAction action)
         {
             try
             {
-                _logger.LogDebug("Executing cron message {Message}", message);
-
-                if (_discordFacade.Client.ConnectionState != ConnectionState.Connected)
-                    return;
-
-                var task = _discordFacade.Client.GetGuild(message.GuildId)?.GetTextChannel(message.ChannelId)?.SendMessageAsync(message.Message);
-                if (task != null)
-                    await task.ConfigureAwait(false);
+                await action.ActionAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error while processing cron message {Message}", message);
+                _logger.LogWarning(ex, "Error while processing cron action {Message}", action);
             }
         }
     }
