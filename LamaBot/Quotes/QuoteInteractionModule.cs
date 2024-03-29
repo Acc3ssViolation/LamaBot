@@ -143,9 +143,9 @@ namespace LamaBot.Quotes
                     var quote = new Quote(guild.Id, uberQuote.Id, uberQuote.UserId, uberQuote.Nick, channelId, uberQuote.Channel ?? "", uberQuote.Text, uberQuote.MessageId, uberQuote.DateTime.ToUniversalTime().DateTime);
                     await _quoteRepository.InsertQuoteAsync(quote);
                     if (i % 50 == 0)
-                        await ReportProgressAsync($"Adding quotes {i * 100 / quotes.Count}%");
+                        await ReportProgressAsync($"Adding quotes {i * 100 / quotes.Count}% - '{quote.Content}'");
                 }
-                await ReportProgressAsync($"Adding quotes completed!");
+                await ReportProgressAsync($"Adding quotes completed! Highest quote is #{quotes.Max(q => q.Id)}");
             }
             catch (Exception ex)
             {
