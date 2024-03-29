@@ -1,13 +1,11 @@
 ﻿using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using LamaBot.Quotes;
 using LamaBot.Database;
 using LamaBot.Cron;
 using LamaBot.Servers;
 using LamaBot.Tunnel;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace LamaBot
 {
@@ -20,6 +18,11 @@ namespace LamaBot
             await app.Services.GetRequiredService<DatabaseStorage>().InitializeAsync();
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
             TaskExtensions.Initialize(logger);
+
+            var assembly = Assembly.GetExecutingAssembly();
+            var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            var version = fileVersionInfo.ProductVersion ?? "Unknown";
+            logger.LogInformation("Version {Version}", version);
 
             app.MapControllers();
             
