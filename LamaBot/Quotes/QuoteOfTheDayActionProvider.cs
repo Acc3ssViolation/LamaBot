@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace LamaBot.Quotes
 {
-    public class QuoteOfTheDayActionProvider : ICronActionProvider
+    public class QuoteOfTheDayActionProvider : DisposableBase, ICronActionProvider
     {
         private class QuoteOfTheDayAction : ICronAction
         {
@@ -56,6 +56,7 @@ namespace LamaBot.Quotes
         private readonly IQuoteRepository _quoteRepository;
         private readonly IServerSettings _serverSettings;
         private readonly ILogger<QuoteOfTheDayActionProvider> _logger;
+        private readonly IDisposable _eventSubscription;
 
         public QuoteOfTheDayActionProvider(IDiscordFacade discordFacade, IQuoteRepository quoteRepository, IServerSettings serverSettings, ILogger<QuoteOfTheDayActionProvider> logger)
         {
@@ -63,6 +64,12 @@ namespace LamaBot.Quotes
             _quoteRepository = quoteRepository ?? throw new ArgumentNullException(nameof(quoteRepository));
             _serverSettings = serverSettings ?? throw new ArgumentNullException(nameof(serverSettings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _eventSubscription = _serverSettings.SettingChanged.Subscribe((ev, _) =>
+            {
+                if (ev.Setting.Code == QuoteSettings.QuoteOfTheDayChannel || ev.Setting.Code == QuoteSettings.QuoteOfTheDayTime)
+                    ActionsUpdated?.Invoke();
+                return Task.CompletedTask;
+            });
         }
 
         public async Task<IEnumerable<ICronAction>> GetActionsAsync(CancellationToken cancellationToken)
@@ -80,6 +87,11 @@ namespace LamaBot.Quotes
                 actions.Add(action);
             }
             return actions;
+        }
+
+        protected override void OnDisposing()
+        {
+            _eventSubscription?.Dispose();
         }
     }
 }

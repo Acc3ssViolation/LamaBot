@@ -2,10 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using LamaBot.Servers;
-using Microsoft.Extensions.Logging;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Channels;
 
 namespace LamaBot.Quotes
 {
@@ -112,7 +109,7 @@ namespace LamaBot.Quotes
                 return;
             }
 
-            await DeferAsync(ephemeral: true);
+            await DeferAsync();
 
             try
             {
@@ -123,7 +120,8 @@ namespace LamaBot.Quotes
 
                 async Task ReportProgressAsync(string message)
                 {
-                    await ModifyOriginalResponseAsync((msg) => {
+                    await ModifyOriginalResponseAsync((msg) =>
+                    {
                         msg.Content = $"Processing quote list\n\n{message}";
                     });
                 }
@@ -142,7 +140,7 @@ namespace LamaBot.Quotes
                     var channel = guild.Channels.FirstOrDefault(c => c.Name == uberQuote.Channel);
                     var channelId = channel?.Id ?? 0;
 
-                    var quote = new Quote(guild.Id,  uberQuote.Id, uberQuote.UserId, uberQuote.Nick, channelId, uberQuote.Channel ?? "", uberQuote.Text, uberQuote.MessageId, uberQuote.DateTime.ToUniversalTime().DateTime);
+                    var quote = new Quote(guild.Id, uberQuote.Id, uberQuote.UserId, uberQuote.Nick, channelId, uberQuote.Channel ?? "", uberQuote.Text, uberQuote.MessageId, uberQuote.DateTime.ToUniversalTime().DateTime);
                     await _quoteRepository.InsertQuoteAsync(quote);
                     if (i % 50 == 0)
                         await ReportProgressAsync($"Adding quotes {i * 100 / quotes.Count}%");
@@ -394,5 +392,4 @@ namespace LamaBot.Quotes
 
         }
     }
-
 }

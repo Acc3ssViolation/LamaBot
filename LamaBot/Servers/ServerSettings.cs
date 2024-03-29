@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using LamaBot.Events;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace LamaBot.Servers
@@ -9,6 +10,8 @@ namespace LamaBot.Servers
         private readonly ILogger<ServerSettings> _logger;
         private readonly Dictionary<ulong, Dictionary<string, string>> _settings = new ();
         private readonly AsyncLock _settingsLock = new();
+
+        public AsyncEvent<ServerSettingEvent> SettingChanged { get; } = new AsyncEvent<ServerSettingEvent>();
 
         public ServerSettings(IServerSettingRepository settingRepository, ILogger<ServerSettings> logger)
         {
@@ -48,9 +51,15 @@ namespace LamaBot.Servers
                 _settings[guildId] = guildSettings;
             }
             if (value != null)
+            {
                 guildSettings[setting] = value;
+                await SettingChanged.InvokeAsync(new ServerSettingEvent(new ServerSetting(guildId, setting, value), CrudEventType.Updated), CancellationToken.None);
+            }
             else
+            {
                 guildSettings.Remove(setting);
+                await SettingChanged.InvokeAsync(new ServerSettingEvent(new ServerSetting(guildId, setting, ""), CrudEventType.Deleted), CancellationToken.None);
+            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
