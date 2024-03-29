@@ -3,18 +3,21 @@ using Discord.Interactions;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 namespace LamaBot
 {
     public class DebugModule : InteractionModuleBase
     {
+        private readonly HttpClient _httpClient;
         private readonly ILogger<DebugModule> _logger;
 
-        public DebugModule(ILogger<DebugModule> logger)
+        public DebugModule(HttpClient httpClient, ILogger<DebugModule> logger)
         {
-            _logger = logger;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        
+
         [SlashCommand("about", "Get info about the bot status")]
         public async Task GetAboutAsync()
         {
@@ -38,7 +41,55 @@ namespace LamaBot
         {
             await RespondAsync("Rebooting bot...");
             await Task.Delay(1000);
+            _logger.LogWarning("Rebooting for command!");
             Environment.Exit(0);
+        }
+
+        [RequireOwner]
+        [SlashCommand("update", "Apply update")]
+        public async Task UpdateAsync(IAttachment attachment)
+        {
+            await DeferAsync();
+
+            _logger.LogWarning("Got bot update command");
+
+            var sb = new StringBuilder();
+            await ModifyOriginalResponseAsync(msg =>
+            {
+                sb.AppendLine("Downloading update...");
+                msg.Content = sb.ToString();
+            });
+            try
+            {
+                var tempFilePath = Path.GetTempFileName();
+                using (var httpResponse = await _httpClient.GetAsync(attachment.Url).ConfigureAwait(false))
+                {
+                    using (var fileStream = File.Create("update.zip"))
+                    {
+                        await httpResponse.Content.CopyToAsync(fileStream).ConfigureAwait(false);
+                    }
+                }
+
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    sb.AppendLine("Update downloaded!");
+                    sb.AppendLine("Rebooting bot...");
+                    msg.Content = sb.ToString();
+                });
+
+                await Task.Delay(1000);
+                _logger.LogWarning("Rebooting for update!");
+                Environment.Exit(0);
+            }
+            catch (Exception ex)
+            {
+                await ModifyOriginalResponseAsync(msg =>
+                {
+                    sb.Append("Exception: ");
+                    sb.AppendLine(ex.Message);
+                    msg.Content = sb.ToString();
+                });
+            }
         }
 
         [RequireOwner]
