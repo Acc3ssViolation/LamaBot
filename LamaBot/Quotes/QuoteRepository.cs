@@ -95,7 +95,7 @@ namespace LamaBot.Quotes
             return count > 0;
         }
 
-        public async Task<IReadOnlyList<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default)
+        public async Task<List<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();
             var quotes = await dbContext.Quotes.AsNoTracking().OfGuild(guildId).ToListAsync(cancellationToken).ConfigureAwait(false);

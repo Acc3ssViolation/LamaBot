@@ -12,6 +12,6 @@
 
         Task<bool> DeleteQuoteAsync(ulong guildId, int id, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default);
+        Task<List<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default);
     }
 }
