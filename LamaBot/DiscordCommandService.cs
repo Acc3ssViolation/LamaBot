@@ -31,14 +31,33 @@ namespace LamaBot
             await _discord.WaitUntilReadyAsync(stoppingToken).ConfigureAwait(false);
 
             _logger.LogDebug("Registering interactions");
+            // Set up service with logging
             var interactionService = new InteractionService(_discord.Client, new InteractionServiceConfig
             {
                 LogLevel = Discord.LogSeverity.Debug,
             });
             interactionService.Log += new DiscordLogger<InteractionService>(_loggerFactory).Log;
 
+            // Load all modules
             await interactionService.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), _serviceProvider).ConfigureAwait(false);
 
+            // Register error handler
+            interactionService.InteractionExecuted += async (command, context, result) =>
+            {
+                if (!result.IsSuccess)
+                {
+                    if (context.Interaction.HasResponded)
+                        await context.Interaction.ModifyOriginalResponseAsync(msg =>
+                        {
+                            var orig = msg.Content.GetValueOrDefault("");
+                            msg.Content = orig + '\n' + result.ErrorReason;
+                        }).ConfigureAwait(false);
+                    else
+                        await context.Interaction.RespondAsync(text: result.ErrorReason, ephemeral: true).ConfigureAwait(false);
+                }
+            };
+
+            // Handle interactions from the client
             _discord.Client.InteractionCreated += async (x) =>
             {
                 // Only handle interactions from guilds that are enabled
@@ -49,6 +68,8 @@ namespace LamaBot
                 await interactionService.ExecuteCommandAsync(ctx, _serviceProvider);
             };
 
+            // Register the commands in a guild
+            // TODO: Make this more automatic
             if (_discord.TestGuild.HasValue)
                 await interactionService.RegisterCommandsToGuildAsync(_discord.TestGuild.Value).ConfigureAwait(false);
             
