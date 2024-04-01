@@ -32,4 +32,8 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WebSocketProxy.Client\WebSocketProxy.Client.csproj" />
+  </ItemGroup>
+
 </Project>

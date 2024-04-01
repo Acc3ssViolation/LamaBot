@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using WebSocketProxy.Client;
 
 namespace LamaBot.Tunnel
 {
@@ -9,6 +8,11 @@ namespace LamaBot.Tunnel
         {
             return serviceCollection
                 .AddSingleton<IHostedService, TunnelService>()
+                .AddSingleton<Func<WebSocketProxyClient>>(sp => () =>
+                {
+                    var logger = sp.GetRequiredService<ILogger<WebSocketProxyClient>>();
+                    return new WebSocketProxyClient(logger);
+                })
                 .Configure<TunnelSettings>(configuration);
         }
     }
