@@ -361,7 +361,7 @@ namespace LamaBot.Quotes
                 return;
             }
 
-            await DeferAsync();
+            await DeferAsync(ephemeral: true);
 
             // TODO: Move this operation to the database, it is probably faster
             IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(guildId.Value);
