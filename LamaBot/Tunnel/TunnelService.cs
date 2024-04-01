@@ -28,9 +28,9 @@ namespace LamaBot.Tunnel
                     webSocket.ForwardingPort = 80;
 
                     await webSocket.ConnectAsync(_options.Value.Endpoint, _options.Value.Id, _options.Value.Key, stoppingToken).ConfigureAwait(false);
-                    await webSocket.AcceptBridgesAsync(stoppingToken).ConfigureAwait(false);
                     hasConnected = true;
                     _logger.LogInformation("Connected to WebSocket proxy server");
+                    await webSocket.AcceptBridgesAsync(stoppingToken).ConfigureAwait(false);
                 }
                 catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
                 {
