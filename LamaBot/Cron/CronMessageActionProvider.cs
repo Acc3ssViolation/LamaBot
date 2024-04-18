@@ -51,6 +51,8 @@ namespace LamaBot.Cron
             _discord = discord ?? throw new ArgumentNullException(nameof(discord));
             _cronRepository = cronRepository ?? throw new ArgumentNullException(nameof(cronRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _cronRepository.MessagesUpdated += OnMessagesUpdated;
         }
 
         public event Action? ActionsUpdated;
@@ -60,6 +62,7 @@ namespace LamaBot.Cron
             var messages = await _cronRepository.GetMessagesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             return messages.Select(m => new CronMessageAction(m, _discord, _logger));
         }
+
         private void OnMessagesUpdated()
         {
             ActionsUpdated?.Invoke();
