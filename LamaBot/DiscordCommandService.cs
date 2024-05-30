@@ -28,9 +28,8 @@ namespace LamaBot
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogDebug("Starting command service");
-            await _discord.WaitUntilReadyAsync(stoppingToken).ConfigureAwait(false);
 
-            _logger.LogDebug("Registering interactions");
+            _logger.LogDebug("Creating interactions");
             // Set up service with logging
             var interactionService = new InteractionService(_discord.Client, new InteractionServiceConfig
             {
@@ -68,12 +67,14 @@ namespace LamaBot
                 await interactionService.ExecuteCommandAsync(ctx, _serviceProvider);
             };
 
-            // Register the commands in a guild
-            // TODO: Make this more automatic
-            if (_discord.TestGuild.HasValue)
-                await interactionService.RegisterCommandsToGuildAsync(_discord.TestGuild.Value).ConfigureAwait(false);
-            
-            _logger.LogDebug("Interactions registered!");
+            // Auto register interactions on guilds
+            _discord.Client.GuildAvailable += async (guild) =>
+            {
+                await interactionService.RegisterCommandsToGuildAsync(guild.Id).ConfigureAwait(false);
+                _logger.LogInformation("Registered interactions on guild {Name}", guild.Name);
+            };
+
+            _logger.LogDebug("Interactions created!");
 
             _logger.LogDebug("Registering text commands");
             var commandService = new CommandService(new CommandServiceConfig
@@ -132,6 +133,8 @@ namespace LamaBot
                 foreach (var hook in hooks)
                     await hook.OnReactionAsync(message, guildChannel, reaction);
             };
+
+            await _discord.WaitUntilReadyAsync(stoppingToken).ConfigureAwait(false);
 
             await stoppingToken.UntilCancelledNoThrow().ConfigureAwait(false);
             _logger.LogDebug("Stopped command service");
