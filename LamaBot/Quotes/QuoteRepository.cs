@@ -48,13 +48,17 @@ namespace LamaBot.Quotes
             return await dbContext.QuoteRequests.AsNoTracking().CountAsync(q => q.Id == quoteId && q.GuildId == guildId, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, CancellationToken cancellationToken = default)
+        public async Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, ulong? userId = null, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();
 
             // TODO: Rewrite this as a single LINQ query that gets handled as SQL instead of this monstrosity
-            var quoteStats = await dbContext.QuoteRequests.AsNoTracking()
-                .Where(q => q.GuildId == guildId)
+            var qbQuoteRequests = dbContext.QuoteRequests.AsNoTracking()
+                .Where(q => q.GuildId == guildId);
+            if (userId.HasValue)
+                qbQuoteRequests = qbQuoteRequests.Where(q => q.UserId == userId);
+
+            var quoteStats = await qbQuoteRequests
                 .GroupBy(q => q.Id)
                 .OrderByDescending(q => q.Count())
                 .Take(max)

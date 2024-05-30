@@ -393,7 +393,9 @@ namespace LamaBot.Quotes
         }
 
         [SlashCommand("top", "See who is truly popular")]
-        public async Task TopQuotesAsync([Summary("max", "How many quotes?")] int max = 10)
+        public async Task TopQuotesAsync(
+            [Summary("user", "This user's most used quotes")] SocketGuildUser? user = null,
+            [Summary("max", "Amount of quotes to get, defaults to 10")] int max = 10)
         {
             var guildId = Context.Interaction.GuildId;
             if (!guildId.HasValue)
@@ -408,14 +410,24 @@ namespace LamaBot.Quotes
                 return;
             }
 
+            if (user != null && user.Id != Context.Interaction.User.Id)
+            {
+                var info = await Context.Client.GetApplicationInfoAsync();
+                if (Context.Interaction.User.Id != info.Owner.Id)
+                {
+                    await RespondAsync("Privacy law says you can't see this");
+                    return;
+                }
+            }
+
             await DeferAsync();
 
-            var quotes = await _quoteRepository.GetQuotesByRequestCountAsync(guildId.Value, max);
+            var quotes = await _quoteRepository.GetQuotesByRequestCountAsync(guildId.Value, max, user?.Id);
 
             await ModifyOriginalResponseAsync((msg) =>
             {
                 var embed = new EmbedBuilder()
-                    .WithTitle($"Top {quotes.Count} quotes");
+                    .WithTitle(user != null ? $"Top {quotes.Count} quotes used by {user.DisplayName}" : $"Top {quotes.Count} quotes");
                 if (quotes.Count == 0)
                     embed.WithDescription("No quotes found");
                 else
@@ -428,7 +440,6 @@ namespace LamaBot.Quotes
 
                 msg.Embed = embed.Build();
             });
-
         }
     }
 }

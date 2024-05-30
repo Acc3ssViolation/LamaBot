@@ -8,7 +8,7 @@
 
         Task<int> GetQuoteRequestCountAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default);
 
-        Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, CancellationToken cancellationToken = default);
+        Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, ulong? userId = null, CancellationToken cancellationToken = default);
 
         Task<Quote?> GetQuoteAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default);
 
