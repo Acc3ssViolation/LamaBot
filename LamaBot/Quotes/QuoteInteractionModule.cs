@@ -391,5 +391,44 @@ namespace LamaBot.Quotes
             });
 
         }
+
+        [SlashCommand("top", "See who is truly popular")]
+        public async Task TopQuotesAsync([Summary("max", "How many quotes?")] int max = 10)
+        {
+            var guildId = Context.Interaction.GuildId;
+            if (!guildId.HasValue)
+            {
+                await RespondAsync("This command only be run in a server");
+                return;
+            }
+
+            if (max > 25)
+            {
+                await RespondAsync("Top 25 is the best we can do, sorry");
+                return;
+            }
+
+            await DeferAsync();
+
+            var quotes = await _quoteRepository.GetQuotesByRequestCountAsync(guildId.Value, max);
+
+            await ModifyOriginalResponseAsync((msg) =>
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle($"Top {quotes.Count} quotes");
+                if (quotes.Count == 0)
+                    embed.WithDescription("No quotes found");
+                else
+                    for (var i = 0; i < quotes.Count; i++)
+                    {
+                        var nr = i + 1;
+                        var q = quotes[i];
+                        embed.AddField($"#{nr}  -  Quote {q.Quote.Id}  -  {q.Count}x", $"{q.Quote.Content}\n- {q.Quote.GetQuoteAuthor()} {q.Quote.GetMessageLink()}");
+                    }
+
+                msg.Embed = embed.Build();
+            });
+
+        }
     }
 }

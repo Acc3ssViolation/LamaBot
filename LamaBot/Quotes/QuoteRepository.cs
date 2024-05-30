@@ -26,6 +26,57 @@ namespace LamaBot.Quotes
             return ToModel(quote);
         }
 
+        public async Task RegisterQuoteRequestAsync(Quote quote, ulong userId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+            var dbQuoteRequest = new DbQuoteRequest
+            {
+                Id = quote.Id,
+                GuildId = quote.GuildId,
+                UserId = userId,
+                TimestampUtc = DateTime.UtcNow,
+            };
+            dbContext.QuoteRequests.Add(dbQuoteRequest);
+
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<int> GetQuoteRequestCountAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            return await dbContext.QuoteRequests.AsNoTracking().CountAsync(q => q.Id == quoteId && q.GuildId == guildId, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            // TODO: Rewrite this as a single LINQ query that gets handled as SQL instead of this monstrosity
+            var quoteStats = await dbContext.QuoteRequests.AsNoTracking()
+                .Where(q => q.GuildId == guildId)
+                .GroupBy(q => q.Id)
+                .OrderByDescending(q => q.Count())
+                .Take(max)
+                .Select(q => new { Id = q.Key, Count = q.Count() })
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+            var quotes = await dbContext.Quotes.AsNoTracking()
+                .Where(q => q.GuildId == guildId)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+            var result = new List<QuoteWithCount>(quoteStats.Count);
+
+            foreach (var stat in quoteStats)
+            {
+                var quote = quotes.FirstOrDefault(q => q.Id == stat.Id);
+                if (quote != null)
+                    result.Add(new QuoteWithCount(ToModel(quote), stat.Count));
+            }
+
+            return result;
+        }
+
         public async Task<Quote?> GetRandomQuoteAsync(ulong guildId, string? author = null, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();

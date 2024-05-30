@@ -49,6 +49,9 @@ namespace LamaBot.Quotes
                 await ReplyAsync("No quote found. Wow, chat more, losers.");
                 return;
             }
+
+            await _quoteRepository.RegisterQuoteRequestAsync(quote, Context.User.Id);
+
             await ReplyAsync(embed: quote.CreateEmbed());
         }
     }

@@ -14,11 +14,12 @@ namespace LamaBot.Database
         public ulong MessageId { get; set; }
         public DateTime TimestampUtc { get; set; }
 
+        public List<DbQuoteRequest> Requests { get; set; }
+
         public static void OnModelCreating(ModelBuilder modelBuilder)
         {
             var entityBuilder = modelBuilder.Entity<DbQuote>();
             entityBuilder.HasKey(_ => new { _.GuildId, _.Id });
-            entityBuilder.Property(_ => _.Id);
             entityBuilder.HasIndex(_ => _.UserName);
         }
     }
