@@ -384,8 +384,12 @@ namespace LamaBot.Quotes
                 if (filteredQuotes.Count == 0)
                     embed.WithDescription("No quotes found");
                 else
+                {
                     foreach (var quote in filteredQuotes)
-                        embed.AddField($"#{quote.Id}", $"{quote.Content}\n- {quote.GetQuoteAuthor()} {quote.GetMessageLink()}");
+                    {
+                        embed.AddField($"#{quote.Id}", QuoteToField(quote));
+                    }
+                }
 
                 msg.Embed = embed.Build();
             });
@@ -435,11 +439,23 @@ namespace LamaBot.Quotes
                     {
                         var nr = i + 1;
                         var q = quotes[i];
-                        embed.AddField($"#{nr}  -  Quote {q.Quote.Id}  -  {q.Count}x", $"{q.Quote.Content}\n- {q.Quote.GetQuoteAuthor()} {q.Quote.GetMessageLink()}");
+                        embed.AddField($"#{nr}  -  Quote {q.Quote.Id}  -  {q.Count}x", QuoteToField(q.Quote));
                     }
 
                 msg.Embed = embed.Build();
             });
+        }
+
+        private static string QuoteToField(Quote quote)
+        {
+            const string Elipses = "...";
+
+            var content = quote.Content;
+            var field = $"{content}\n- {quote.GetQuoteAuthor()} {quote.GetMessageLink()}";
+            var overshoot = field.Length - 1024;
+            if (overshoot > 0)
+                field = $"{content[..^(overshoot + Elipses.Length)]}{Elipses}\n- {quote.GetQuoteAuthor()} {quote.GetMessageLink()}";
+            return field;
         }
     }
 }

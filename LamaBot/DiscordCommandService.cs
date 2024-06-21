@@ -27,6 +27,8 @@ namespace LamaBot
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            var registeredGuilds = new HashSet<ulong>();
+
             _logger.LogDebug("Starting command service");
 
             _logger.LogDebug("Creating interactions");
@@ -70,8 +72,18 @@ namespace LamaBot
             // Auto register interactions on guilds
             _discord.Client.GuildAvailable += async (guild) =>
             {
+                // No need to register for the same guild twice
+                if (registeredGuilds.Contains(guild.Id))
+                    return;
+
                 await interactionService.RegisterCommandsToGuildAsync(guild.Id).ConfigureAwait(false);
+                registeredGuilds.Add(guild.Id);
                 _logger.LogInformation("Registered interactions on guild {Name}", guild.Name);
+            };
+            _discord.Client.Disconnected += (exc) =>
+            {
+                _logger.LogInformation(exc, "Disconnect reason");
+                return Task.CompletedTask;
             };
 
             _logger.LogDebug("Interactions created!");
