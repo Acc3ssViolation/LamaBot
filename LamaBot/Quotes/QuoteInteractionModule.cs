@@ -393,7 +393,49 @@ namespace LamaBot.Quotes
 
                 msg.Embed = embed.Build();
             });
+        }
 
+        [SlashCommand("info", "Show info about a quote")]
+        public async Task QuoteUsageAsync(
+            [Summary("quoteId", "The ID of the quote to get info for")] int quoteId)
+        {
+            var guildId = Context.Interaction.GuildId;
+            if (!guildId.HasValue)
+            {
+                await RespondAsync("This command only be run in a server");
+                return;
+            }
+
+            await DeferAsync();
+
+            var quote = await _quoteRepository.GetQuoteAsync(guildId.Value, quoteId);
+            if (quote == null)
+            {
+                await ModifyOriginalResponseAsync((message) =>
+                {
+                    message.Content = "Quote not found? Perhaps the archives are incomplete.";
+                });
+                return;
+            }
+
+            var requestCount = await _quoteRepository.GetQuoteRequestCountAsync(guildId.Value, quoteId);
+            var firstRequest = await _quoteRepository.GetFirstQuoteUseAsync(guildId.Value, quoteId);
+            var lastRequest = await _quoteRepository.GetLastQuoteUseAsync(guildId.Value, quoteId);
+            var biggestRequesterId = await _quoteRepository.GetMostCommonRequesterAsync(guildId.Value, quoteId);
+
+            await ModifyOriginalResponseAsync((message) =>
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle($"Info for quote #{quoteId}")
+                    .AddField("Author", quote.GetQuoteAuthor(), inline: true)
+                    .AddField("Message", quote.GetMessageLink(), inline: true)
+                    .AddField("Use count", requestCount, inline: true)
+                    .AddField("First use", firstRequest?.ToDiscordTimestamp() ?? "Never", inline: true)
+                    .AddField("Last use", lastRequest?.ToDiscordTimestamp() ?? "Never", inline: true)
+                    .AddField("Biggest fan", biggestRequesterId.HasValue ? $"<@{biggestRequesterId}>" : "Nobody :(", inline: true);
+
+                message.Embed = embed.Build();
+            });
         }
 
         [SlashCommand("top", "See who is truly popular")]

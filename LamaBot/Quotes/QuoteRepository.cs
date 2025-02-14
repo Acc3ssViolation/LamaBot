@@ -48,6 +48,47 @@ namespace LamaBot.Quotes
             return await dbContext.QuoteRequests.AsNoTracking().CountAsync(q => q.Id == quoteId && q.GuildId == guildId, cancellationToken).ConfigureAwait(false);
         }
 
+        public async Task<DateTime?> GetFirstQuoteUseAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbQuoteRequest = await dbContext.QuoteRequests
+                .AsNoTracking()
+                .OrderBy(g => g.TimestampUtc)
+                .FirstOrDefaultAsync(q => q.Id == quoteId && q.GuildId == guildId, cancellationToken: cancellationToken);
+            return dbQuoteRequest?.TimestampUtc;
+        }
+
+        public async Task<DateTime?> GetLastQuoteUseAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbQuoteRequest = await dbContext.QuoteRequests
+                .AsNoTracking()
+                .OrderByDescending(g => g.TimestampUtc)
+                .FirstOrDefaultAsync(q => q.Id == quoteId && q.GuildId == guildId, cancellationToken: cancellationToken);
+            return dbQuoteRequest?.TimestampUtc;
+        }
+
+        public async Task<ulong?> GetMostCommonRequesterAsync(ulong guildId, int quoteId, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var userRequests = await dbContext.QuoteRequests
+                .AsNoTracking()
+                .Where(q => q.GuildId == guildId && q.Id == quoteId)
+                .GroupBy(g => g.UserId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    Count = g.Count(),
+                })
+                .OrderBy(g => g.Count)
+                .ToListAsync(cancellationToken);
+
+            return userRequests.FirstOrDefault()?.UserId;
+        }
+
         public async Task<List<QuoteWithCount>> GetQuotesByRequestCountAsync(ulong guildId, int max = 10, ulong? userId = null, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();
