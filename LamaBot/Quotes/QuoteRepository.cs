@@ -83,7 +83,7 @@ namespace LamaBot.Quotes
                     UserId = g.Key,
                     Count = g.Count(),
                 })
-                .OrderBy(g => g.Count)
+                .OrderByDescending(g => g.Count)
                 .ToListAsync(cancellationToken);
 
             return userRequests.FirstOrDefault()?.UserId;
