@@ -6,6 +6,7 @@ using LamaBot.Servers;
 using LamaBot.Tunnel;
 using System.Diagnostics;
 using System.Reflection;
+using LamaBot.Web;
 
 namespace LamaBot
 {
@@ -74,6 +75,8 @@ namespace LamaBot
                         .AddSingleton<IDiscordFacade>(sp => sp.GetRequiredService<DiscordService>())
                         .AddSingleton<DiscordCommandService>()
                         .AddSingleton<IHostedService>(sp => sp.GetRequiredService<DiscordCommandService>())
+                        .AddAuthentication()
+                        .AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", (_) => { })
                         ;
                 });
             return builder;
