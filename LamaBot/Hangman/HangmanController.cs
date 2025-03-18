@@ -24,10 +24,17 @@ namespace LamaBot.Hangman
             _discordFacade.Client.MessageReceived += OnMessageAsync;
         }
 
-        public async Task StartGameOnChannel(ulong channelId, CancellationToken cancellationToken)
+        public async Task StartGameOnChannel(ulong channelId, Difficulty difficulty, CancellationToken cancellationToken)
         {
             var word = await _wordProvider.GetWordAsync(cancellationToken).ConfigureAwait(false);
-            var game = new HangmanGame(channelId, DateTime.UtcNow, word, [], []);
+            var bonusErrors = difficulty switch
+            {
+                Difficulty.Easy => 0,
+                Difficulty.Medium => 3,
+                Difficulty.Hard => 6,
+                _ => 10,
+            };
+            var game = new HangmanGame(channelId, DateTime.UtcNow, word, bonusErrors, [], []);
             _games.AddOrUpdate(channelId, game, (_, _) => game);
             await PostGameAsync(game);
         }
@@ -146,7 +153,7 @@ namespace LamaBot.Hangman
             if (message != null)
                 embed = embed.WithFields(new EmbedFieldBuilder().WithName(">").WithValue(message).WithIsInline(true));
 
-            var index = Math.Min(_imageProvider.ImageCount - 1, game.Errors.Count);
+            var index = Math.Min(_imageProvider.ImageCount - 1, game.ImageIndex);
             var stream = await _imageProvider.GetImageAsync(index, CancellationToken.None).ConfigureAwait(false);
             var fileAttachment = new FileAttachment(stream, "hangman.png");
             await messageChannel.SendFileAsync(fileAttachment, embed: embed.Build()).ConfigureAwait(false);

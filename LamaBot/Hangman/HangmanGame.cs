@@ -1,7 +1,9 @@
 ﻿namespace LamaBot.Hangman
 {
-    public record HangmanGame(ulong ChannelId, DateTime LastUsedUtc, string Word, IReadOnlyList<string> Guesses, IReadOnlyList<string> Errors)
+    public record HangmanGame(ulong ChannelId, DateTime LastUsedUtc, string Word, int BonusErrors, IReadOnlyList<string> Guesses, IReadOnlyList<string> Errors)
     {
+        public int ImageIndex => Errors.Count + BonusErrors;
+
         public GameResult CalculateResult(int errorKillCount)
         {
             var allMatched = true;
@@ -26,7 +28,7 @@
             if (allMatched)
                 return GameResult.Win;
 
-            if (Errors.Count >= errorKillCount)
+            if ((Errors.Count + BonusErrors) >= errorKillCount)
                 return GameResult.Loss;
 
             return GameResult.Playing;

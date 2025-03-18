@@ -16,7 +16,9 @@ namespace LamaBot.Hangman
         }
 
         [SlashCommand("hangman", "Guess like your life depends on it!")]
-        public async Task StartGameAsync()
+        public async Task StartGameAsync(
+            [Summary("difficulty", "The difficulty of the game")] Difficulty difficulty = Difficulty.Easy
+            )
         {
             var channelId = Context.Interaction.ChannelId;
             if (!channelId.HasValue)
@@ -27,7 +29,7 @@ namespace LamaBot.Hangman
 
             await RespondAsync("Starting a game of hangman!");
 
-            await _controller.StartGameOnChannel(channelId.Value, CancellationToken.None).ConfigureAwait(false);
+            await _controller.StartGameOnChannel(channelId.Value, difficulty, CancellationToken.None).ConfigureAwait(false);
         }
     }
 }
