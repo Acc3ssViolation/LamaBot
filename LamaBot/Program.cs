@@ -7,6 +7,7 @@ using LamaBot.Tunnel;
 using System.Diagnostics;
 using System.Reflection;
 using LamaBot.Web;
+using LamaBot.Hangman;
 
 namespace LamaBot
 {
@@ -64,6 +65,7 @@ namespace LamaBot
                     services.Configure<DiscordOptions>(hostContext.Configuration.GetSection("Discord"))
                         .AddDatabase(hostContext.Configuration.GetSection("Database"))
                         .AddQuotes()
+                        .AddHangman()
                         .AddCronMessages()
                         .AddServerSettings()
                         .AddWebSocketTunnel(hostContext.Configuration.GetSection("Tunnel"))
