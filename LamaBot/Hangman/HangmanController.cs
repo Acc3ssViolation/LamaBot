@@ -134,7 +134,7 @@ namespace LamaBot.Hangman
             {
                 GameResult.Win => "YOU WON!",
                 GameResult.Loss => "YOU ARE DEAD",
-                _ => "Guess the word!",
+                _ => "Raad het woord!",
             };
 
             var embed = new EmbedBuilder()
