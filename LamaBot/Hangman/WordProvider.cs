@@ -5,7 +5,7 @@ namespace LamaBot.Hangman
     {
         const string WordListUrl = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
         const int MinLength = 4;
-        const int MaxLength = 15;
+        const int MaxLength = 150;
 
         private List<string>? _words;
 
