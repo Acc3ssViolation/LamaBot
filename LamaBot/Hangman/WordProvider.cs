@@ -3,7 +3,7 @@ namespace LamaBot.Hangman
 {
     public class WordProvider
     {
-        const string WordListUrl = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
+        const string WordListUrl = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/elements/wordlist-ascii.txt";
         const int MinLength = 4;
         const int MaxLength = 150;
 
@@ -26,7 +26,7 @@ namespace LamaBot.Hangman
                 var words = new HashSet<string>();
                 while ((line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) != null) 
                 {
-                    if (line.Length < MinLength || line.Length > MaxLength || line.Any(c => !char.IsLetter(c)))
+                    if (line.Length < MinLength || line.Length > MaxLength || line.Any(c => !char.IsAsciiLetterLower(c)))
                         continue;
 
                     words.Add(line.ToUpperInvariant());
