@@ -317,6 +317,7 @@ namespace LamaBot.Quotes
             }
         }
 
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [MessageCommand("Update quote")]
         public async Task UpdateQuoteAsync(IMessage message)
         {
