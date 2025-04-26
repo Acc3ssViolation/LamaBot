@@ -24,6 +24,8 @@
 
         Task InsertQuoteAsync(Quote quote, CancellationToken cancellationToken = default);
 
+        Task<Quote?> UpdateQuoteAsync(ulong guildId, ulong messageId, string content, CancellationToken cancellationToken = default);
+
         Task<bool> DeleteQuoteAsync(ulong guildId, int id, CancellationToken cancellationToken = default);
 
         Task<List<Quote>> GetQuotesAsync(ulong guildId, CancellationToken cancellationToken = default);

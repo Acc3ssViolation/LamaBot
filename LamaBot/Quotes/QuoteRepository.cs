@@ -184,6 +184,18 @@ namespace LamaBot.Quotes
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        public async Task<Quote?> UpdateQuoteAsync(ulong guildId, ulong messageId, string content, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+            var dbQuote = await dbContext.Quotes.Where(g => g.GuildId == guildId && g.MessageId == messageId).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            if (dbQuote == null)
+                return null;
+
+            dbQuote.Content = content;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return ToModel(dbQuote);
+        }
+
         public async Task<bool> DeleteQuoteAsync(ulong guildId, int id, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();

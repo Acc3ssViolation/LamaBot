@@ -317,6 +317,35 @@ namespace LamaBot.Quotes
             }
         }
 
+        [MessageCommand("Update quote")]
+        public async Task UpdateQuoteAsync(IMessage message)
+        {
+            if (message.Channel is not IGuildChannel guildChannel)
+            {
+                await RespondAsync("Quotes can only be added via servers");
+                return;
+            }
+
+            await DeferAsync();
+
+            try
+            {
+                var quote = await _quoteRepository.UpdateQuoteAsync(guildChannel.GuildId, message.Id, message.Content).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync((msg) =>
+                {
+                    if (quote != null)
+                        msg.Content = $"<@{Context.User.Id}> update quote #{quote.Id} {quote.GetMessageLink()}";
+                    else
+                        msg.Content = $"<@{Context.User.Id}> tried to update a quote, but the message was never quoted!";
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update quote");
+                await this.OnDeferredErrorAsync(ex).ConfigureAwait(false);
+            }
+        }
+
         [SlashCommand("create", "Just make something up")]
         public async Task CreateQuoteAsync(
             [Summary("text", "What did they say?!")] string content,
