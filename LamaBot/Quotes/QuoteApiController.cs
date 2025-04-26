@@ -52,16 +52,10 @@ namespace LamaBot.Quotes
             SocketGuildUser? user = null;
             if (quote.UserId != 0)
                 user = guild.GetUser(quote.UserId);
-            
+
             if (user == null)
-            {
-                var match = UserRefRegex().Match(quote.UserName);
-                if (match.Success)
-                {
-                    var userId = ulong.Parse(match.Groups[1].ValueSpan);
-                    user = guild.GetUser(userId);
-                }
-            }
+                user = guild.ResolveUser(quote.UserName);
+
             var username = user?.DisplayName ?? quote.UserName;
             return quote with { Content = content, UserName = username, UserId = user?.Id ?? quote.UserId };
         }

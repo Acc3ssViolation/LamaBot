@@ -335,7 +335,8 @@ namespace LamaBot.Quotes
             try
             {
                 var msg = await Context.Interaction.GetOriginalResponseAsync();
-                var quote = new Quote(guildId.Value, 0, 0, author, Context.Channel.Id, Context.Channel.Name, content, msg.Id, DateTime.UtcNow);
+                var authorUser = (Context.Guild as SocketGuild)?.ResolveUser(author);
+                var quote = new Quote(guildId.Value, 0, authorUser?.Id ?? 0, authorUser?.Username ?? author, Context.Channel.Id, Context.Channel.Name, content, msg.Id, DateTime.UtcNow);
                 quote = await _quoteRepository.AddQuoteAsync(quote).ConfigureAwait(false);
                 await ModifyOriginalResponseAsync((msg) =>
                 {
