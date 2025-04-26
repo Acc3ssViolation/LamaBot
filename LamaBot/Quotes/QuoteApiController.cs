@@ -20,9 +20,6 @@ namespace LamaBot.Quotes
             for (var i = 0; i < quotes.Count; i++)
             {
                 var quote = quotes[i];
-                if (quote.UserId == 0)
-                    continue;
-
                 quotes[i] = ResolveReferences(quote, client);
             }
 
@@ -52,7 +49,19 @@ namespace LamaBot.Quotes
                 return match.Value;
             });
 
-            var user = guild.GetUser(quote.UserId);
+            SocketGuildUser? user = null;
+            if (quote.UserId != 0)
+                user = guild.GetUser(quote.UserId);
+            
+            if (user == null)
+            {
+                var match = UserRefRegex().Match(quote.UserName);
+                if (match.Success)
+                {
+                    var userId = ulong.Parse(match.Groups[1].ValueSpan);
+                    user = guild.GetUser(userId);
+                }
+            }
             var username = user?.DisplayName ?? quote.UserName;
             return quote with { Content = content, UserName = username };
         }
