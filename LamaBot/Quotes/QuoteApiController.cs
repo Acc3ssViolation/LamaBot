@@ -63,7 +63,7 @@ namespace LamaBot.Quotes
                 }
             }
             var username = user?.DisplayName ?? quote.UserName;
-            return quote with { Content = content, UserName = username };
+            return quote with { Content = content, UserName = username, UserId = user?.Id ?? quote.UserId };
         }
 
         [GeneratedRegex("<@(\\d+)>")]
