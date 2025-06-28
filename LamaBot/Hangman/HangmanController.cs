@@ -57,6 +57,9 @@ namespace LamaBot.Hangman
             if (trimmed.Length == 0)
                 return;
 
+            if (trimmed.EnumerateRunes().Count() > 1)
+                return;
+
             CleanUpOldGames();
 
             var guess = Rune.ToUpperInvariant(trimmed.EnumerateRunes().First()).ToString();
