@@ -97,9 +97,9 @@ namespace LamaBot
             commandService.Log += new DiscordLogger<CommandService>(_loggerFactory).Log;
             await commandService.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), _serviceProvider).ConfigureAwait(false);
 
-            _discord.Client.MessageReceived += async (x) =>
+            async Task HandleTextMessage(SocketMessage message)
             {
-                if (x is not SocketUserMessage userMessage || userMessage.Author.IsBot)
+                if (message is not SocketUserMessage userMessage || userMessage.Author.IsBot)
                     return;
 
                 // If this is a guild message we need to check if we're supposed to handle commands from it
@@ -122,6 +122,20 @@ namespace LamaBot
                 var result = await commandService.ExecuteAsync(ctx, argPos, _serviceProvider).ConfigureAwait(false);
                 if (!result.IsSuccess)
                     _logger.LogWarning("Error during command execution: {Error}", result.ErrorReason);
+            }
+
+            _discord.Client.MessageReceived += async (x) =>
+            {
+                await HandleTextMessage(x);
+            };
+
+            _discord.Client.MessageUpdated += async (_, msg, channel) =>
+            {
+                var now = DateTimeOffset.UtcNow;
+                if (now - msg.CreatedAt > TimeSpan.FromMinutes(5))
+                    return;
+
+                await HandleTextMessage(msg);
             };
 
             _logger.LogDebug("Text commands registered!");
