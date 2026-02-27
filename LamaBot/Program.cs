@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Reflection;
 using LamaBot.Web;
 using LamaBot.Hangman;
+using LamaBot.Components;
 
 namespace LamaBot
 {
@@ -77,6 +78,9 @@ namespace LamaBot
                         .AddSingleton<IDiscordFacade>(sp => sp.GetRequiredService<DiscordService>())
                         .AddSingleton<DiscordCommandService>()
                         .AddSingleton<IHostedService>(sp => sp.GetRequiredService<DiscordCommandService>())
+                        .AddSingleton<InteractiveComponentService>()
+                        .AddSingleton<IHostedService>(sp => sp.GetRequiredService<InteractiveComponentService>())
+                        .AddSingleton<IInteractiveComponentService>(sp => sp.GetRequiredService<InteractiveComponentService>())
                         .AddAuthentication()
                         .AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", (_) => { })
                         ;

@@ -47,6 +47,9 @@ namespace LamaBot
             {
                 if (!result.IsSuccess)
                 {
+                    if (result.Error == InteractionCommandError.UnknownCommand)
+                        return;
+
                     if (context.Interaction.HasResponded)
                         await context.Interaction.ModifyOriginalResponseAsync(msg =>
                         {

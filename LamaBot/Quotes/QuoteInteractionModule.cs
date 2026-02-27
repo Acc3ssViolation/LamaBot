@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LamaBot.Components;
 using LamaBot.Servers;
 using System.Text.Json;
 
@@ -12,12 +13,14 @@ namespace LamaBot.Quotes
     {
         private readonly HttpClient _httpClient;
         private readonly IQuoteRepository _quoteRepository;
+        private readonly IInteractiveComponentService _componentService;
         private readonly ILogger<QuoteInteractionModule> _logger;
 
-        public QuoteInteractionModule(HttpClient httpClient, IQuoteRepository quoteRepository, ILogger<QuoteInteractionModule> logger)
+        public QuoteInteractionModule(HttpClient httpClient, IQuoteRepository quoteRepository, IInteractiveComponentService componentService, ILogger<QuoteInteractionModule> logger)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _quoteRepository = quoteRepository ?? throw new ArgumentNullException(nameof(quoteRepository));
+            _componentService = componentService ?? throw new ArgumentNullException(nameof(componentService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -380,6 +383,20 @@ namespace LamaBot.Quotes
             }
         }
 
+        private record QuoteSearchParams(ulong GuildId, SocketGuildUser? User, string? Content, int Page);
+
+        private async Task SearchQuotesAsync(SocketMessageComponent component, object? data)
+        {
+            var param = data as QuoteSearchParams;
+            if (param == null)
+                return;
+            
+            await component.UpdateAsync(async (msg) =>
+            {
+                await ShowQuoteSearchResultsAsync(msg, param);
+            });
+        }
+
         [SlashCommand("search", "Hey Google!")]
         public async Task SearchQuotesAsync(
             [Summary("author", "Who said the thing?")] SocketGuildUser? user = null,
@@ -394,36 +411,52 @@ namespace LamaBot.Quotes
 
             await DeferAsync(ephemeral: true);
 
-            // TODO: Move this operation to the database, it is probably faster
-            IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(guildId.Value);
-            if (user != null)
-                quotes = quotes.Where(q => q.UserId == user.Id || q.UserName == user.Username);
-            if (content != null)
-                quotes = quotes.Where(q => q.Content.Contains(content, StringComparison.OrdinalIgnoreCase));
+            await ModifyOriginalResponseAsync(async (msg) =>
+            {
+                await ShowQuoteSearchResultsAsync(msg, new QuoteSearchParams(guildId.Value, user, content, 0));
+            });
+        }
+
+        private async Task ShowQuoteSearchResultsAsync(MessageProperties message, QuoteSearchParams searchParams)
+        {
+            // Get quotes that match filter
+            IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(searchParams.GuildId);
+            if (searchParams.User != null)
+                quotes = quotes.Where(q => q.UserId == searchParams.User.Id || q.UserName == searchParams.User.Username);
+            if (searchParams.Content != null)
+                quotes = quotes.Where(q => q.Content.Contains(searchParams.Content, StringComparison.OrdinalIgnoreCase));
             var filteredQuotes = quotes.ToList();
 
-            await ModifyOriginalResponseAsync((msg) =>
+            // Split up into current page
+            var pageCount = (filteredQuotes.Count / Constants.QuoteSearchPageSize) + 1;
+            var page = Math.Clamp(searchParams.Page, 0, pageCount - 1);
+            var pagedQuotes = filteredQuotes.Skip(page * Constants.QuoteSearchPageSize).Take(Constants.QuoteSearchPageSize).ToList();
+
+            // Create the search result embed
+            var embed = new EmbedBuilder()
+                    .WithTitle($"Found {filteredQuotes.Count} quotes (page {page + 1}/{pageCount})");
+            if (filteredQuotes.Count > 0)
             {
-                if (filteredQuotes.Count > 25)
+                foreach (var quote in pagedQuotes)
                 {
-                    msg.Content = $"Found {filteredQuotes.Count} quotes, please narrow down your search";
-                    return;
+                    embed.AddField($"#{quote.Id}", QuoteToField(quote));
                 }
+            }
+            else
+            {
+                embed.WithDescription("No quotes found");
+            }
 
-                var embed = new EmbedBuilder()
-                    .WithTitle($"Found {filteredQuotes.Count} quotes");
-                if (filteredQuotes.Count == 0)
-                    embed.WithDescription("No quotes found");
-                else
-                {
-                    foreach (var quote in filteredQuotes)
-                    {
-                        embed.AddField($"#{quote.Id}", QuoteToField(quote));
-                    }
-                }
+            message.Embed = embed.Build();
 
-                msg.Embed = embed.Build();
-            });
+            // Create page navigation buttons
+            var component = new ComponentBuilder();
+            var previousPageId = _componentService.Register(searchParams with { Page = page - 1 }, SearchQuotesAsync);
+            component.WithButton(label: "Previous", customId: previousPageId, disabled: page == 0);
+            var nextPageId = _componentService.Register(searchParams with { Page = page + 1 }, SearchQuotesAsync);
+            component.WithButton(label: "Next", customId: nextPageId, disabled: page + 1 >= pageCount);
+
+            message.Components = component.Build();
         }
 
         [SlashCommand("info", "Show info about a quote")]
