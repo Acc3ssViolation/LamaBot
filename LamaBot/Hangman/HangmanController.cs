@@ -35,6 +35,9 @@ namespace LamaBot.Hangman
                 _ => 10,
             };
             var game = new HangmanGame(channelId, DateTime.UtcNow, word, bonusErrors, [], []);
+
+            CleanUpOldGames();
+
             _games.AddOrUpdate(channelId, game, (_, _) => game);
             await PostGameAsync(game);
         }
