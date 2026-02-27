@@ -428,7 +428,9 @@ namespace LamaBot.Quotes
             var filteredQuotes = quotes.ToList();
 
             // Split up into current page
-            var pageCount = (filteredQuotes.Count / Constants.QuoteSearchPageSize) + 1;
+            var pageCount = (int)Math.Ceiling((float)filteredQuotes.Count / Constants.QuoteSearchPageSize);
+            if (pageCount == 0)
+                pageCount = 1;
             var page = Math.Clamp(searchParams.Page, 0, pageCount - 1);
             var pagedQuotes = filteredQuotes.Skip(page * Constants.QuoteSearchPageSize).Take(Constants.QuoteSearchPageSize).ToList();
 
