@@ -84,33 +84,6 @@ namespace LamaBot
             await ReplyAsync(sb.ToString());
         }
 
-        [RequireOwner]
-        [Command("backup")]
-        [Summary("Create a backup of an instance's database")]
-        public async Task BackupAsync(string instance)
-        {
-            if (instance != GetInstanceName())
-                return;
-
-            var msg = await ReplyAsync("Backing up database...");
-
-            var tempFile = Path.GetTempFileName();
-            using (var backup = new SqliteConnection($"Data Source={tempFile}"))
-            {
-                using var dbContext = _dbContextFactory();
-                var databaseConnection = (SqliteConnection)dbContext.Database.GetDbConnection();
-                await databaseConnection.OpenAsync();
-                databaseConnection.BackupDatabase(backup);
-                SqliteConnection.ClearPool(backup);
-            }
-
-            await msg.ModifyAsync(msg =>
-            {
-                msg.Content = "Backed up database, see attached file";
-                msg.Attachments = new FileAttachment[] { new(tempFile, $"backup-{GetInstanceName()}-{DateTime.UtcNow:s}.db") };
-            });
-        }
-
         private static string GetInstanceName()
             => Dns.GetHostName();
     }

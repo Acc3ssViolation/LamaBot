@@ -9,7 +9,7 @@ namespace LamaBot
     {
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [SlashCommand("say", "Say something!")]
-        public async Task SaySync(
+        public async Task SayAsync(
             [Summary("channel", "Where to say something")] SocketTextChannel channel,
             [Summary("message", "What to say")] string message
             )
