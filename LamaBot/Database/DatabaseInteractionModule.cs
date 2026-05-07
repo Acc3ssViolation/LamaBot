@@ -20,7 +20,8 @@ namespace LamaBot.Database
         [SlashCommand("backup", "Create a non-surprise database backup")]
         public async Task BackupAsync()
         {
-            var msg = await ReplyAsync("Backing up database...");
+            await DeferAsync(ephemeral: true);
+            await ModifyOriginalResponseAsync(msg => msg.Content = "Backing up database...");
 
             var tempFile = Path.GetTempFileName();
             using (var backup = new SqliteConnection($"Data Source={tempFile}"))
@@ -32,7 +33,7 @@ namespace LamaBot.Database
                 SqliteConnection.ClearPool(backup);
             }
 
-            await msg.ModifyAsync(msg =>
+            await ModifyOriginalResponseAsync(msg =>
             {
                 msg.Content = "Backed up database, see attached file";
                 msg.Attachments = new FileAttachment[] { new(tempFile, $"backup-{Dns.GetHostName()}-{DateTime.UtcNow:s}.db") };
