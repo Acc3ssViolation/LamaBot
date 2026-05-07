@@ -49,7 +49,7 @@ namespace LamaBot
         [SlashCommand("update", "Apply update")]
         public async Task UpdateAsync(IAttachment attachment)
         {
-            await DeferAsync();
+            await DeferAsync(ephemeral: true);
 
             _logger.LogWarning("Got bot update command");
 
@@ -114,7 +114,7 @@ namespace LamaBot
 
         [RequireOwner]
         [SlashCommand("run", "Run Forest, Run")]
-        public async Task RunAsync(string script, string arguments)
+        public async Task RunAsync(string script, string? arguments = null)
         {
             await DeferAsync(ephemeral: true);
             
@@ -122,7 +122,7 @@ namespace LamaBot
             var startInfo = new ProcessStartInfo
             {
                 FileName = script,
-                Arguments = arguments,
+                Arguments = arguments ?? "",
                 
                 RedirectStandardOutput = true,
             };
