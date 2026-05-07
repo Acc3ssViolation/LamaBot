@@ -112,6 +112,40 @@ namespace LamaBot
             await RespondAsync(ephemeral: true, embed: embed);
         }
 
+        [RequireOwner]
+        [SlashCommand("run", "Run Forest, Run")]
+        public async Task RunAsync(string script, string arguments)
+        {
+            await DeferAsync(ephemeral: true);
+            
+            using var cts = new CancellationTokenSource(30000);
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = script,
+                Arguments = arguments,
+                
+                RedirectStandardOutput = true,
+            };
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                await ModifyOriginalResponseAsync(msg => msg.Content = $"Could not start {script} {arguments}");
+                return;
+            }
+
+            await ModifyOriginalResponseAsync(msg => msg.Content = $"Running {script} {arguments}");
+            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+            if (!process.HasExited)
+            {
+                process.Kill(true);
+                await ModifyOriginalResponseAsync(msg => msg.Content = $"Timed out running {script} {arguments}");
+                return;
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await ModifyOriginalResponseAsync(msg => msg.Content = $"Output for {script} {arguments}: {process.ExitCode}\n{output}");
+        }
+
         private static string GetWorkingSet()
         {
             using var process = Process.GetCurrentProcess();
