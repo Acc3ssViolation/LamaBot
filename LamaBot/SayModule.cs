@@ -14,8 +14,9 @@ namespace LamaBot
             [Summary("message", "What to say")] string message
             )
         {
-            await channel.SendMessageAsync(message).ConfigureAwait(false);
-            await RespondAsync($"Message delivered to {channel}");
+            await DeferAsync(ephemeral: true);
+            await channel.SendMessageAsync(message);
+            await ModifyOriginalResponseAsync(msg => msg.Content = $"Message delivered to {channel}");
         }
     }
 }
