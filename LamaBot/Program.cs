@@ -69,6 +69,7 @@ namespace LamaBot
                         .AddHangman()
                         .AddCronMessages()
                         .AddServerSettings()
+                        .AddMemoryCache()
                         .AddWebSocketTunnel(hostContext.Configuration.GetSection("Tunnel"))
                         .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
@@ -81,6 +82,7 @@ namespace LamaBot
                         .AddSingleton<InteractiveComponentService>()
                         .AddSingleton<IHostedService>(sp => sp.GetRequiredService<InteractiveComponentService>())
                         .AddSingleton<IInteractiveComponentService>(sp => sp.GetRequiredService<InteractiveComponentService>())
+                        .AddScoped<ITextMessageHandler, CopyCatMessageHandler>()
                         .AddAuthentication()
                         .AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", (_) => { })
                         ;

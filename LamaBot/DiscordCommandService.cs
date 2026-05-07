@@ -1,7 +1,9 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using LamaBot.Servers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -118,7 +120,13 @@ namespace LamaBot
                 var argPos = 0;
                 // Determine if the message is a command based on the prefix
                 if (!userMessage.HasCharPrefix(prefix, ref argPos))
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var hooks = scope.ServiceProvider.GetServices<ITextMessageHandler>();
+                    foreach (var hook in hooks)
+                        await hook.HandleMessageAsync(message, stoppingToken);
                     return;
+                }
 
                 var ctx = new SocketCommandContext(_discord.Client, userMessage);
 
