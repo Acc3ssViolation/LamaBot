@@ -129,21 +129,21 @@ namespace LamaBot
             using var process = Process.Start(startInfo);
             if (process == null)
             {
-                await ModifyOriginalResponseAsync(msg => msg.Content = $"Could not start {script} {arguments}");
+                await ModifyOriginalResponseAsync(msg => msg.Content = $"Could not start `{script} {arguments}`");
                 return;
             }
 
-            await ModifyOriginalResponseAsync(msg => msg.Content = $"Running {script} {arguments}");
+            await ModifyOriginalResponseAsync(msg => msg.Content = $"Running `{script} {arguments}`");
             await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
             if (!process.HasExited)
             {
                 process.Kill(true);
-                await ModifyOriginalResponseAsync(msg => msg.Content = $"Timed out running {script} {arguments}");
+                await ModifyOriginalResponseAsync(msg => msg.Content = $"Timed out running `{script} {arguments}`");
                 return;
             }
 
             var output = await process.StandardOutput.ReadToEndAsync();
-            await ModifyOriginalResponseAsync(msg => msg.Content = $"Output for {script} {arguments}: {process.ExitCode}\n{output}");
+            await ModifyOriginalResponseAsync(msg => msg.Content = $"Output for `{script} {arguments}`: `{process.ExitCode}`\n```{output}```");
         }
 
         private static string GetWorkingSet()
