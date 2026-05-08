@@ -1,4 +1,5 @@
-﻿using LamaBot.Servers;
+﻿using LamaBot.Modules.Quotes;
+using LamaBot.Servers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
@@ -35,7 +36,7 @@ namespace LamaBot.Web
             if (string.IsNullOrWhiteSpace(key))
                 return AuthenticateResult.Fail("No key provided");
 
-            var expectedKey = await _settings.GetSettingAsync(guildId, Quotes.QuoteSettings.QuoteApiKey).ConfigureAwait(false);
+            var expectedKey = await _settings.GetSettingAsync(guildId, QuoteSettings.QuoteApiKey).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(expectedKey))
                 return AuthenticateResult.Fail("No key stored for guild");
 

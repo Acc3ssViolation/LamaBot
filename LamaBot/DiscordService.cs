@@ -1,7 +1,5 @@
 ﻿using Discord.WebSocket;
 using Discord;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace LamaBot
@@ -30,8 +28,6 @@ namespace LamaBot
         }
 
         public DiscordSocketClient Client => _client;
-
-        public ulong? TestGuild => _options.Value.TestGuildId != null ? ulong.Parse(_options.Value.TestGuildId!) : null;
 
         public async Task WaitUntilReadyAsync(CancellationToken cancellationToken)
         {

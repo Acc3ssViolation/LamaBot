@@ -1,5 +1,4 @@
-﻿using LamaBot.Events;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace LamaBot.Servers

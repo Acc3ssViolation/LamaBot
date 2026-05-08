@@ -1,14 +1,15 @@
 ﻿using Discord.WebSocket;
-using LamaBot.Quotes;
 using LamaBot.Database;
-using LamaBot.Cron;
 using LamaBot.Servers;
 using LamaBot.Tunnel;
 using System.Diagnostics;
 using System.Reflection;
 using LamaBot.Web;
-using LamaBot.Hangman;
 using LamaBot.Components;
+using LamaBot.Modules.Quotes;
+using LamaBot.Modules.Hangman;
+using LamaBot.Modules.Cron;
+using LamaBot.Modules.CopyCat;
 
 namespace LamaBot
 {

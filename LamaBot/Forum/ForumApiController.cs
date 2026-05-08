@@ -1,4 +1,4 @@
-﻿using LamaBot.Quotes;
+﻿using LamaBot.Modules.Quotes;
 using LamaBot.Servers;
 using Microsoft.AspNetCore.Mvc;
 

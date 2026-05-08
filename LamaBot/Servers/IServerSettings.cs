@@ -1,6 +1,4 @@
-﻿using LamaBot.Events;
-
-namespace LamaBot.Servers
+﻿namespace LamaBot.Servers
 {
     public enum CrudEventType
     {
