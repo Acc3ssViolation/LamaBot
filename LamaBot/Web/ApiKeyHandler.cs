@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
@@ -40,6 +41,9 @@ namespace LamaBot.Web
             var apiKeyInfo = await _apiKeyRepository.GetApiKeyInfoAsync(guildId, key, Context.RequestAborted).ConfigureAwait(false);
             if (apiKeyInfo == null)
                 return AuthenticateResult.Fail("Key invalid");
+
+            if (apiKeyInfo.ExpirationUtc.HasValue && apiKeyInfo.ExpirationUtc.Value < DateTime.UtcNow)
+                return AuthenticateResult.Fail("Key expired");
 
             var claims = apiKeyInfo.Roles.Select(r => new Claim(ClaimTypes.Role, r));
             var identity = new ClaimsIdentity(claims, "ApiKey");

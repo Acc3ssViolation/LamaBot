@@ -8,6 +8,7 @@ namespace LamaBot.Database
         public DbSet<DbQuote> Quotes { get; set; }
         public DbSet<DbCronMessage> CronMessages { get; set; }
         public DbSet<DbServerSetting> ServerSettings { get; set; }
+        public DbSet<DbApiKey> ApiKeys { get; set; }
 
 
         public ApplicationDbContext() : base(DefaultOptions)
@@ -24,6 +25,7 @@ namespace LamaBot.Database
             DbQuote.OnModelCreating(modelBuilder);
             DbCronMessage.OnModelCreating(modelBuilder);
             DbServerSetting.OnModelCreating(modelBuilder);
+            DbApiKey.OnModelCreating(modelBuilder);
         }
 
         public static DbContextOptions<ApplicationDbContext> DefaultOptions

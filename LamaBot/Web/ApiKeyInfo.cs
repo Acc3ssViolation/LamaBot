@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LamaBot.Web
 {
-    public record ApiKeyInfo(ulong GuildId, ICollection<string> Roles);
+    public record ApiKeyInfo(ulong GuildId, ICollection<string> Roles, DateTime? ExpirationUtc);
 }
