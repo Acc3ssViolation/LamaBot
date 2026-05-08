@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using System;
 using System.Text.RegularExpressions;
 
 namespace LamaBot

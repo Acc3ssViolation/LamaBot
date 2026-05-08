@@ -1,4 +1,6 @@
-﻿namespace LamaBot
+﻿using System;
+
+namespace LamaBot
 {
     public abstract class DisposableBase : IDisposable
     {

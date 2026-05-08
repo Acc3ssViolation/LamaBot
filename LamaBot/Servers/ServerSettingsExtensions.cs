@@ -1,4 +1,7 @@
-﻿namespace LamaBot.Servers
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot.Servers
 {
     internal static class ServerSettingsExtensions
     {

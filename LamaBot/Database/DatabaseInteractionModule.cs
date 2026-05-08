@@ -2,7 +2,10 @@
 using Discord.Interactions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace LamaBot.Database
 {

@@ -1,4 +1,7 @@
-﻿namespace LamaBot.Web
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot.Web
 {
     public interface IApiKeyRepository
     {

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace LamaBot
 {
@@ -25,7 +26,7 @@ namespace LamaBot
 
                 _ => LogLevel.Error,
             };
-            _logger.Log(level, "{0}", message);
+            _logger.Log(level, "{Message}", message);
             return Task.CompletedTask;
         }
     }

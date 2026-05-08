@@ -1,4 +1,9 @@
-﻿namespace LamaBot.Modules.Hangman
+﻿using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot.Modules.Hangman
 {
     public class ImageProvider
     {

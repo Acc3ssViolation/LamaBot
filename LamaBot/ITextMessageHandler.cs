@@ -1,4 +1,6 @@
 ﻿using Discord.WebSocket;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LamaBot
 {

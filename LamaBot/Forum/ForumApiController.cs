@@ -1,6 +1,9 @@
 ﻿using LamaBot.Modules.Quotes;
 using LamaBot.Servers;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LamaBot.Forum
 {

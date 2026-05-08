@@ -1,6 +1,11 @@
 ﻿using Discord.WebSocket;
 using Discord;
 using Microsoft.Extensions.Options;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Threading;
 
 namespace LamaBot
 {

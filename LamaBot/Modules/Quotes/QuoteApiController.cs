@@ -1,9 +1,9 @@
 ﻿using Discord.WebSocket;
 using LamaBot.Modules.Quotes;
-using LamaBot.Servers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace LamaBot.Quotes
 {

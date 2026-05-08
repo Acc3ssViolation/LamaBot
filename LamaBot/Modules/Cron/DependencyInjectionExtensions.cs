@@ -1,4 +1,6 @@
-﻿namespace LamaBot.Modules.Cron
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace LamaBot.Modules.Cron
 {
     internal static class DependencyInjectionExtensions
     {

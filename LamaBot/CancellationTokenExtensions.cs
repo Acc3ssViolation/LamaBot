@@ -1,4 +1,7 @@
-﻿namespace LamaBot
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot
 {
     internal static class CancellationTokenExtensions
     {

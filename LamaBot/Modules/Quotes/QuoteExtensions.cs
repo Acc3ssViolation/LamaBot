@@ -1,7 +1,5 @@
 ﻿using Discord;
 using System.Text;
-using System.Threading.Channels;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace LamaBot.Modules.Quotes
 {

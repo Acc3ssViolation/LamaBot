@@ -1,4 +1,8 @@
-﻿namespace LamaBot
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LamaBot
 {
     public static class EnumerableExtensions
     {

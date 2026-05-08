@@ -1,4 +1,6 @@
 ﻿using Discord.Interactions;
+using System;
+using System.Threading.Tasks;
 
 namespace LamaBot
 {

@@ -3,7 +3,10 @@ using Discord.WebSocket;
 using LamaBot.Servers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Quotes
 {

@@ -1,4 +1,6 @@
-﻿namespace WebSocketProxy.Client
+﻿using System.Threading.Tasks;
+
+namespace WebSocketProxy.Client
 {
     internal static class TaskExtensions
     {

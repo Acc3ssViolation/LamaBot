@@ -1,4 +1,6 @@
-﻿namespace LamaBot.Modules.Hangman
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace LamaBot.Modules.Hangman
 {
     internal static class DependencyInjectionExtensions
     {

@@ -1,9 +1,14 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Bot
 {

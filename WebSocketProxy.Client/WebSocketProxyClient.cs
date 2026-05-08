@@ -1,9 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Buffers;
+using System.IO;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace WebSocketProxy.Client
 {

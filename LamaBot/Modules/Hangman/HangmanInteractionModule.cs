@@ -1,5 +1,9 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Hangman
 {

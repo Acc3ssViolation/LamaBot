@@ -1,7 +1,13 @@
 ﻿using Cronos;
 using LamaBot.Modules.Cron;
 using LamaBot.Servers;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Quotes
 {

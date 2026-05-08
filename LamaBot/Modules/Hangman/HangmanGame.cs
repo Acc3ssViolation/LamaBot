@@ -1,4 +1,7 @@
-﻿namespace LamaBot.Modules.Hangman
+﻿using System;
+using System.Collections.Generic;
+
+namespace LamaBot.Modules.Hangman
 {
     public record HangmanGame(ulong ChannelId, DateTime LastUsedUtc, string Word, int BonusErrors, IReadOnlyList<string> Guesses, IReadOnlyList<string> Errors)
     {

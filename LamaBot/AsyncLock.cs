@@ -1,4 +1,8 @@
-﻿namespace LamaBot
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot
 {
     internal class AsyncLock : IDisposable
     {

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Say
 {

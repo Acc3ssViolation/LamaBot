@@ -1,4 +1,9 @@
-﻿namespace LamaBot.Modules.Cron
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LamaBot.Modules.Cron
 {
     public interface ICronRepository
     {

@@ -1,5 +1,9 @@
 ﻿using Discord.WebSocket;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LamaBot.Modules.CopyCat
 {

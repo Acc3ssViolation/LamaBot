@@ -1,4 +1,6 @@
-﻿namespace LamaBot.Tunnel
+﻿using System;
+
+namespace LamaBot.Tunnel
 {
     public class TunnelSettings
     {
