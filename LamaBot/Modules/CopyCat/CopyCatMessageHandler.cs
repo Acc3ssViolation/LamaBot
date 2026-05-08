@@ -45,14 +45,11 @@ namespace LamaBot.Modules.CopyCat
 
             stats.Count++;
 
-            if (stats.Count > 3)
+            if (stats.Count >= 3)
             {
-                if (Random.Shared.Next(10) < stats.Count)
-                {
-                    _logger.LogInformation("Copy Cat ᓚ₍ ^. ̫ .^₎: {Message}", message.Content);
-                    await guildChannel.SendMessageAsync(message.Content);
-                    stats.Count = 0;
-                }
+                _logger.LogInformation("Copy Cat ᓚ₍ ^. ̫ .^₎: {Message}", message.Content);
+                await guildChannel.SendMessageAsync(message.Content);
+                stats.Count = 0;
             }
         }
     }
