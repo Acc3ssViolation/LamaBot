@@ -1,10 +1,6 @@
-﻿using LamaBot.Modules.Quotes;
-using LamaBot.Servers;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
@@ -14,18 +10,18 @@ namespace LamaBot.Web
 {
     public class ApiKeyHandler : AuthenticationHandler<ApiKeyOptions>
     {
-        private readonly IServerSettings _settings;
+        private readonly IApiKeyRepository _apiKeyRepository;
 
-        public ApiKeyHandler(IServerSettings settings, IOptionsMonitor<ApiKeyOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
+        public ApiKeyHandler(IApiKeyRepository apiKeyRepository, IOptionsMonitor<ApiKeyOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
         {
-            _settings = settings;
+            _apiKeyRepository = apiKeyRepository;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             if (!(Request.RouteValues.TryGetValue("guildId", out var guildIdObj) &&
-                guildIdObj is string guildIdString && 
-                ulong.TryParse( guildIdString, out var guildId)))
+                guildIdObj is string guildIdString &&
+                ulong.TryParse(guildIdString, out var guildId)))
                 return AuthenticateResult.Fail("No guildId in route");
 
             string? key = null;
@@ -41,17 +37,11 @@ namespace LamaBot.Web
             if (string.IsNullOrWhiteSpace(key))
                 return AuthenticateResult.Fail("No key provided");
 
-            var expectedKey = await _settings.GetSettingAsync(guildId, QuoteSettings.QuoteApiKey).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(expectedKey))
-                return AuthenticateResult.Fail("No key stored for guild");
-
-            if (!expectedKey.Equals(key, StringComparison.OrdinalIgnoreCase))
+            var apiKeyInfo = await _apiKeyRepository.GetApiKeyInfoAsync(guildId, key, Context.RequestAborted).ConfigureAwait(false);
+            if (apiKeyInfo == null)
                 return AuthenticateResult.Fail("Key invalid");
 
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.Role, "QuoteReader"),
-            };
+            var claims = apiKeyInfo.Roles.Select(r => new Claim(ClaimTypes.Role, r));
             var identity = new ClaimsIdentity(claims, "ApiKey");
             var principal = new ClaimsPrincipal(identity);
             return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));

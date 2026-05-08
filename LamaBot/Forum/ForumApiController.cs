@@ -1,5 +1,5 @@
-﻿using LamaBot.Modules.Quotes;
-using LamaBot.Servers;
+﻿using LamaBot.Web;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +9,7 @@ namespace LamaBot.Forum
 {
     [ApiController]
     [Route("api/v1/forum")]
+    [Authorize]
     public class ForumApiController : ControllerBase
     {
         public record ForumChannel(ulong Id, string Name, DateTimeOffset CreatedAt, List<ForumThread> Threads);
@@ -16,12 +17,9 @@ namespace LamaBot.Forum
         public record ForumThread(ulong Id, string Name, DateTimeOffset CreatedAt, bool Archived);
 
         [HttpGet("{guildId}")]
-        public async Task<IActionResult> GetForumThreadsAsync([FromServices] IDiscordFacade facade, [FromServices] IServerSettings serverSettings, [FromRoute] ulong guildId, [FromQuery] string key)
+        [RequireRole(WebRoles.ForumChannelReader)]
+        public async Task<IActionResult> GetForumThreadsAsync([FromServices] IDiscordFacade facade, [FromRoute] ulong guildId)
         {
-            var requiredKey = await serverSettings.GetSettingAsync(guildId, QuoteSettings.QuoteApiKey);
-            if (requiredKey == null || requiredKey != key)
-                return StatusCode(403);
-
             var discord = facade.Client;
             var guild = discord.GetGuild(guildId);
             if (guild == null)
@@ -29,7 +27,6 @@ namespace LamaBot.Forum
 
             var forumChannels = guild.ForumChannels;
             var result = new List<ForumChannel>(forumChannels.Count);
-
 
             foreach (var forumChannel in forumChannels)
             {

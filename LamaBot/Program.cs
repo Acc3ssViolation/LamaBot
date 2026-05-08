@@ -90,6 +90,7 @@ namespace LamaBot
                         .AddSingleton<IDiscordFacade>(sp => sp.GetRequiredService<DiscordService>())
                         .AddSingleton<DiscordCommandService>()
                         .AddSingleton<IHostedService>(sp => sp.GetRequiredService<DiscordCommandService>())
+                        .AddSingleton<IApiKeyRepository, ApiKeyRepository>()
                         .AddAuthentication()
                         .AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", (_) => { })
                         ;

@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using LamaBot.Modules.Quotes;
+using LamaBot.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
@@ -13,6 +14,7 @@ namespace LamaBot.Quotes
     public partial class QuoteApiController : ControllerBase
     {
         [HttpGet("{guildId}")]
+        [RequireRole(WebRoles.QuoteReader)]
         public async Task<IActionResult> GetQuotesAsync([FromServices] IQuoteRepository quoteRepository, [FromServices] IDiscordFacade discord, [FromRoute] ulong guildId, [FromQuery] string key)
         {
             var quotes = await quoteRepository.GetQuotesAsync(guildId, HttpContext.RequestAborted);
