@@ -34,7 +34,7 @@ namespace LamaBot.Modules.CopyCat
 
             var stats = _memoryCache.GetOrCreate($"{guildChannel.Guild.Id}:{guildChannel.Id}", (cache) =>
             {
-                cache.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                cache.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7);
                 return new ChannelStats { LastMessage = message.Content, Count = 0 };
             })!;
             if (!string.Equals(stats.LastMessage, message.Content, StringComparison.OrdinalIgnoreCase))
