@@ -133,7 +133,7 @@ namespace LamaBot.Modules.Quotes
 
             var quotes = dbContext.Quotes.AsNoTracking().OfGuild(guildId);
             if (author != null)
-                quotes = quotes.Where(q => q.UserName == author);
+                quotes = quotes.Where(q => EF.Functions.Like(q.UserName, author));
             quotes = quotes.OrderBy(q => q.Id);
             var quoteCount = await quotes.CountAsync(cancellationToken).ConfigureAwait(false);
             if (quoteCount == 0)
