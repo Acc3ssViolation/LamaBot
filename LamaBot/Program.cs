@@ -1,7 +1,6 @@
 ﻿using Discord.WebSocket;
 using LamaBot.Database;
 using LamaBot.Servers;
-using LamaBot.Tunnel;
 using System.Diagnostics;
 using System.Reflection;
 using LamaBot.Web;
@@ -47,13 +46,9 @@ namespace LamaBot
 
             builder.WebHost.UseKestrel(k =>
             {
-                k.ListenLocalhost(80, o =>
+                k.ListenLocalhost(9000, o =>
                 {
-                    o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
-                });
-                k.ListenLocalhost(8080, o =>
-                {
-                    o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2;
+                    o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1 | Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2;
                 });
             });
 
@@ -81,7 +76,6 @@ namespace LamaBot
                         .AddServerSettings()
                         .AddInteractiveComponents()
                         .AddMemoryCache()
-                        .AddWebSocketTunnel(hostContext.Configuration.GetSection("Tunnel"))
                         .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()
