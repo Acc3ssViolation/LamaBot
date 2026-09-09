@@ -37,6 +37,12 @@ namespace LamaBot
             var version = fileVersionInfo.ProductVersion ?? "Unknown";
             logger.LogInformation("Version {Version}", version);
 
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
             app.MapControllers();
             
             await app.RunAsync();
@@ -54,6 +60,8 @@ namespace LamaBot
                 });
             });
 
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
             builder.Services.AddControllers();
 
             builder.Host
