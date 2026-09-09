@@ -18,6 +18,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using LamaBot.Modules.Ping;
+using LamaBot.Modules.UserCommands;
 
 namespace LamaBot
 {
@@ -75,6 +76,7 @@ namespace LamaBot
                         .AddCronMessages()
                         .AddCopyCat()
                         .AddPing()
+                        .AddUserCommands()
                         .AddServerSettings()
                         .AddInteractiveComponents()
                         .AddMemoryCache()
