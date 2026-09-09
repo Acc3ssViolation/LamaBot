@@ -1,12 +1,11 @@
 ﻿using Discord.WebSocket;
-using LamaBot.Modules.Quotes;
 using LamaBot.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace LamaBot.Quotes
+namespace LamaBot.Modules.Quotes
 {
     [ApiController]
     [Route("api/v1/quote")]

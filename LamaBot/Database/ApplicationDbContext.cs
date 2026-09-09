@@ -9,6 +9,7 @@ namespace LamaBot.Database
         public DbSet<DbCronMessage> CronMessages { get; set; }
         public DbSet<DbServerSetting> ServerSettings { get; set; }
         public DbSet<DbApiKey> ApiKeys { get; set; }
+        public DbSet<DbUserCommand> UserCommands { get; set; }
 
 
         public ApplicationDbContext() : base(DefaultOptions)
@@ -26,6 +27,7 @@ namespace LamaBot.Database
             DbCronMessage.OnModelCreating(modelBuilder);
             DbServerSetting.OnModelCreating(modelBuilder);
             DbApiKey.OnModelCreating(modelBuilder);
+            DbUserCommand.OnModelCreating(modelBuilder);
         }
 
         public static DbContextOptions<ApplicationDbContext> DefaultOptions
