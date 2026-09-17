@@ -34,7 +34,41 @@ namespace LamaBot.Modules.UserCommands
 
             public async Task RespondAsync(SocketTextChannel channel)
             {
-                await channel.SendMessageAsync(text: Command.Response).ConfigureAwait(false);
+                // TODO: We want this to be in the server timezone and language really, but who cares
+                var now = DateTime.Now;
+                var response = Command.Response
+                    .Replace("$datum", $"$dag {now.Day} $maand {now.Year}")
+                    .Replace("$dag", now.DayOfWeek switch
+                    {
+                        DayOfWeek.Monday => "maandag",
+                        DayOfWeek.Tuesday => "dinsdag",
+                        DayOfWeek.Wednesday => "woensdag",
+                        DayOfWeek.Thursday => "donderdag",
+                        DayOfWeek.Friday => "vrijdag",
+                        DayOfWeek.Saturday => "zaterdag",
+                        DayOfWeek.Sunday => "zondag",
+                        _ => "wtf"
+                    })
+                    .Replace("$maand", now.Month switch
+                    {
+                        1 => "januari",
+                        2 => "februari",
+                        3 => "maart",
+                        4 => "april",
+                        5 => "mei",
+                        6 => "juni",
+                        7 => "juli",
+                        8 => "augustus",
+                        9 => "september",
+                        10 => "oktober",
+                        11 => "november",
+                        12 => "december",
+                        _ => "wtf"
+                    })
+                    .Replace("$week", System.Globalization.ISOWeek.GetWeekOfYear(now).ToString())
+                    .Replace("$jaar", now.Year.ToString());
+
+                await channel.SendMessageAsync(text: response).ConfigureAwait(false);
             }
         }
 
