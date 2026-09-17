@@ -45,6 +45,12 @@ namespace LamaBot
             return new DisposableAction(() => _semaphore.Release());
         }
 
+        public IDisposable WaitBlocking(CancellationToken cancellationToken)
+        {
+            _semaphore.Wait(cancellationToken);
+            return new DisposableAction(() => _semaphore.Release());
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

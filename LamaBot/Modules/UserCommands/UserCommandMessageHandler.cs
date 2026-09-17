@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LamaBot.Modules.UserCommands
 {
-    public class UserCommandMessageHandler : ITextMessageHandler
+    public class UserCommandMessageHandler : DisposableBase, ITextMessageHandler
     {
         private class CompiledUserCommand
         {
@@ -48,11 +48,14 @@ namespace LamaBot.Modules.UserCommands
         private readonly ILogger<UserCommandMessageHandler> _logger;
 
         private Dictionary<ulong, GuildCommands> _commands = new();
+        private readonly AsyncLock _lock = new();
 
         public UserCommandMessageHandler(IUserCommandRepository repository, ILogger<UserCommandMessageHandler> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _repository.CommandsUpdated += OnCommandsUpdated;
         }
 
         public async Task HandleMessageAsync(SocketMessage message, CancellationToken cancellationToken)
@@ -62,6 +65,8 @@ namespace LamaBot.Modules.UserCommands
 
             if (string.IsNullOrWhiteSpace(message.Content))
                 return;
+
+            using var l = await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             var guildCommands = await GetCommandsAsync(guildChannel.Guild.Id).ConfigureAwait(false);
 
@@ -88,9 +93,24 @@ namespace LamaBot.Modules.UserCommands
                 guildCommands.Commands.Clear();
                 foreach (var command in commands)
                     guildCommands.Commands.Add(new CompiledUserCommand(command));
+
+                _logger.LogInformation("Loaded user commands version {Version} for guild {GuildId}", guildCommands.LoadedVersion, guildId);
             }
 
             return guildCommands;
+        }
+
+        protected override void OnDisposing()
+        {
+            _repository.CommandsUpdated -= OnCommandsUpdated;
+        }
+
+        private void OnCommandsUpdated(ulong guildId)
+        {
+            using var l = _lock.WaitBlocking(CancellationToken.None);
+
+            if (_commands.TryGetValue(guildId, out var commands))
+                commands.DesiredVersion++;
         }
     }
 }

@@ -15,6 +15,8 @@ namespace LamaBot.Modules.UserCommands
         private readonly Func<ApplicationDbContext> _dbContextFactory;
         private readonly ILogger<UserCommandRepository> _logger;
 
+        public event Action<ulong>? CommandsUpdated;
+
         public UserCommandRepository(Func<ApplicationDbContext> dbContextFactory, ILogger<UserCommandRepository> logger)
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
@@ -53,20 +55,27 @@ namespace LamaBot.Modules.UserCommands
 
             _logger.LogInformation("Added user command {Command}", command);
 
+            RunCommandsUpdated(dbCommand.GuildId);
+
             return Map(dbCommand);
         }
 
-        public async Task DeleteCommandAsync(ulong guildId, ulong commandId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteCommandAsync(ulong guildId, ulong commandId, CancellationToken cancellationToken = default)
         {
             using var dbContext = _dbContextFactory();
 
             _logger.LogInformation("Deleting user command {GuildId}:{Id}", guildId, commandId);
 
-            await dbContext
+            var removed = await dbContext
                 .UserCommands
                 .Where(c => c.GuildId == guildId && c.Id == commandId)
                 .ExecuteDeleteAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            if (removed > 0)
+                RunCommandsUpdated(guildId);
+
+            return removed > 0;
         }
 
         public async Task<UserCommand> UpdateCommandAsync(UserCommand command, CancellationToken cancellationToken = default)
@@ -87,6 +96,8 @@ namespace LamaBot.Modules.UserCommands
 
             _logger.LogInformation("Updated user command {Command}", command);
 
+            RunCommandsUpdated(dbCommand.GuildId);
+
             return Map(dbCommand);
         }
 
@@ -105,6 +116,21 @@ namespace LamaBot.Modules.UserCommands
                 Json = JsonSerializer.Serialize<UserCommand>(command),
             };
             return dbCommand;
+        }
+
+        private void RunCommandsUpdated(ulong guildId)
+        {
+            if (CommandsUpdated == null)
+                return;
+
+            try
+            {
+                CommandsUpdated.Invoke(guildId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception in CommandsUpdated handler");
+            }
         }
     }
 }
