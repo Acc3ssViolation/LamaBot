@@ -390,19 +390,6 @@ namespace LamaBot.Modules.Quotes
             }
         }
 
-        private record QuoteSearchParams(ulong GuildId, SocketGuildUser? User, string? Content, int Page);
-
-        private async Task SearchQuotesAsync(SocketMessageComponent component, object? data)
-        {
-            var param = data as QuoteSearchParams;
-            if (param == null)
-                return;
-            
-            await component.UpdateAsync(async (msg) =>
-            {
-                await ShowQuoteSearchResultsAsync(msg, param);
-            });
-        }
 
         [SlashCommand("search", "Hey Google!")]
         public async Task SearchQuotesAsync(
@@ -420,52 +407,38 @@ namespace LamaBot.Modules.Quotes
 
             await ModifyOriginalResponseAsync(async (msg) =>
             {
-                await ShowQuoteSearchResultsAsync(msg, new QuoteSearchParams(guildId.Value, user, content, 0));
+                var helper = new QuoteSearchHelper(_quoteRepository, _componentService);
+                await helper.ShowFirstPage(msg, guildId.Value, new QuoteSearchParams(user, content));
             });
         }
 
-        private async Task ShowQuoteSearchResultsAsync(MessageProperties message, QuoteSearchParams searchParams)
+        private record QuoteSearchParams(SocketGuildUser? User, string? Content);
+
+        private class QuoteSearchHelper : PagedResponseHelper<Quote, QuoteSearchParams>
         {
-            // Get quotes that match filter
-            IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(searchParams.GuildId);
-            if (searchParams.User != null)
-                quotes = quotes.Where(q => q.UserId == searchParams.User.Id || q.UserName == searchParams.User.Username);
-            if (searchParams.Content != null)
-                quotes = quotes.Where(q => q.Content.Contains(searchParams.Content, StringComparison.OrdinalIgnoreCase));
-            var filteredQuotes = quotes.ToList();
+            private readonly IQuoteRepository _quoteRepository;
 
-            // Split up into current page
-            var pageCount = (int)Math.Ceiling((float)filteredQuotes.Count / Constants.QuoteSearchPageSize);
-            if (pageCount == 0)
-                pageCount = 1;
-            var page = Math.Clamp(searchParams.Page, 0, pageCount - 1);
-            var pagedQuotes = filteredQuotes.Skip(page * Constants.QuoteSearchPageSize).Take(Constants.QuoteSearchPageSize).ToList();
-
-            // Create the search result embed
-            var embed = new EmbedBuilder()
-                    .WithTitle($"Found {filteredQuotes.Count} quotes (page {page + 1}/{pageCount})");
-            if (filteredQuotes.Count > 0)
+            public QuoteSearchHelper(IQuoteRepository quoteRepository, IInteractiveComponentService componentService) : base(componentService)
             {
-                foreach (var quote in pagedQuotes)
-                {
-                    embed.AddField($"#{quote.Id}", QuoteToField(quote));
-                }
-            }
-            else
-            {
-                embed.WithDescription("No quotes found");
+                _quoteRepository = quoteRepository;
             }
 
-            message.Embed = embed.Build();
+            protected override EmbedFieldBuilder GetField(Quote item)
+            {
+                return new EmbedFieldBuilder()
+                    .WithName($"#{item.Id}")
+                    .WithValue(QuoteToField(item));
+            }
 
-            // Create page navigation buttons
-            var component = new ComponentBuilder();
-            var previousPageId = _componentService.Register(searchParams with { Page = page - 1 }, SearchQuotesAsync);
-            component.WithButton(label: "Previous", customId: previousPageId, disabled: page == 0);
-            var nextPageId = _componentService.Register(searchParams with { Page = page + 1 }, SearchQuotesAsync);
-            component.WithButton(label: "Next", customId: nextPageId, disabled: page + 1 >= pageCount);
-
-            message.Components = component.Build();
+            protected override async Task<IReadOnlyList<Quote>> GetItemsAsync(ulong guildId, QuoteSearchParams options)
+            {
+                IEnumerable<Quote> quotes = await _quoteRepository.GetQuotesAsync(guildId);
+                if (options.User != null)
+                    quotes = quotes.Where(q => q.UserId == options.User.Id || q.UserName == options.User.Username);
+                if (options.Content != null)
+                    quotes = quotes.Where(q => q.Content.Contains(options.Content, StringComparison.OrdinalIgnoreCase));
+                return quotes.ToList();
+            }
         }
 
         [SlashCommand("info", "Show info about a quote")]

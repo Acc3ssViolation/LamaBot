@@ -1,8 +1,9 @@
 ﻿using Discord;
 using Discord.Interactions;
+using LamaBot.Components;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Text;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LamaBot.Modules.UserCommands
@@ -11,11 +12,13 @@ namespace LamaBot.Modules.UserCommands
     [Group("commands", "Because all good things are customized by end users")]
     public class UserCommandInteractionModule : InteractionModuleBase
     {
+        private readonly IInteractiveComponentService _componentService;
         private readonly IUserCommandRepository _repository;
         private readonly ILogger<UserCommandInteractionModule> _logger;
 
-        public UserCommandInteractionModule(IUserCommandRepository repository, ILogger<UserCommandInteractionModule> logger)
+        public UserCommandInteractionModule(IInteractiveComponentService componentService, IUserCommandRepository repository, ILogger<UserCommandInteractionModule> logger)
         {
+            _componentService = componentService ?? throw new ArgumentNullException(nameof(componentService));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -35,24 +38,38 @@ namespace LamaBot.Modules.UserCommands
 
             try
             {
-                var commands = await _repository.GetUserCommandsAsync(guildId.Value);
-
-                await ModifyOriginalResponseAsync((msg) =>
+                await ModifyOriginalResponseAsync(async (msg) =>
                 {
-                    // TODO: Something better lol
-                    var sb = new StringBuilder();
-
-                    foreach (var command in commands)
-                        sb.AppendLine(command.ToString());
-
-                    msg.Content = sb.ToString();
-                    msg.Flags = MessageFlags.SuppressEmbeds;
+                    var helper = new UserCommandHelper(_repository, _componentService);
+                    await helper.ShowFirstPage(msg, guildId.Value, this);
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to get user commands");
                 await this.OnDeferredErrorAsync(ex).ConfigureAwait(false);
+            }
+        }
+
+        private class UserCommandHelper : PagedResponseHelper<UserCommand, object>
+        {
+            private readonly IUserCommandRepository _repository;
+
+            public UserCommandHelper(IUserCommandRepository repository, IInteractiveComponentService componentService) : base(componentService)
+            {
+                _repository = repository;
+            }
+
+            protected override EmbedFieldBuilder GetField(UserCommand item)
+            {
+                return new EmbedFieldBuilder()
+                    .WithName($"#{item.Id} - {item.Trigger} - {item.MatchType}")
+                    .WithValue(item.Response);
+            }
+
+            protected override async Task<IReadOnlyList<UserCommand>> GetItemsAsync(ulong guildId, object options)
+            {
+                return await _repository.GetUserCommandsAsync(guildId);
             }
         }
 

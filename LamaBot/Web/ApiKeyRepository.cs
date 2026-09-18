@@ -43,7 +43,7 @@ namespace LamaBot.Web
 
             var dbApiKey = await dbContext.ApiKeys
                 .AsNoTracking()
-                .FirstOrDefaultAsync(k => k.Key == apiKey, cancellationToken)
+                .FirstOrDefaultAsync(k => k.GuildId == guildId && k.Key == apiKey, cancellationToken)
                 .ConfigureAwait(false);
 
             if (dbApiKey == null)
