@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,23 @@ namespace LamaBot.Web
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<List<ApiKey>> GetApiKeysAsync(CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbApiKeys = await dbContext.ApiKeys
+                .AsNoTracking()
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return dbApiKeys.Select(k => new ApiKey(
+                k.Key, 
+                k.GuildId, 
+                k.Content.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                k.ExpiresUtc)
+            ).ToList();
         }
 
         public async Task<ApiKeyInfo?> GetApiKeyInfoAsync(ulong guildId, string apiKey, CancellationToken cancellationToken)
