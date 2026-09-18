@@ -14,13 +14,12 @@ namespace LamaBot.Modules.Bot
 {
     public class BotInteractionModule : InteractionModuleBase
     {
-        private readonly IApiKeyRepository _apiKeyRepository;
+
         private readonly HttpClient _httpClient;
         private readonly ILogger<BotInteractionModule> _logger;
 
-        public BotInteractionModule(IApiKeyRepository apiKeyRepository, HttpClient httpClient, ILogger<BotInteractionModule> logger)
+        public BotInteractionModule(HttpClient httpClient, ILogger<BotInteractionModule> logger)
         {
-            _apiKeyRepository = apiKeyRepository ?? throw new ArgumentNullException(nameof(apiKeyRepository));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -117,27 +116,6 @@ namespace LamaBot.Modules.Bot
                 .Build();
 
             await RespondAsync(ephemeral: true, embed: embed);
-        }
-
-        [RequireOwner]
-        [SlashCommand("apikeys", "Show all registered API keys")]
-        public async Task ListApiKeysAsync()
-        {
-            await DeferAsync(ephemeral: true);
-
-            var apiKeys = await _apiKeyRepository.GetApiKeysAsync();
-
-            await ModifyOriginalResponseAsync(msg =>
-            {
-                var embed = new EmbedBuilder()
-                    .WithTitle("Api Keys")
-                    .WithCurrentTimestamp();
-
-                foreach (var apiKey in apiKeys)
-                    embed.AddField(apiKey.Key, $"Guild: {apiKey.GuildId}\nRoles: {apiKey.Roles.ToCommaSeparatedString()}\nExpiration: {apiKey.ExpirationUtc?.ToString("s") ?? "never"}");
-
-                msg.Embed = embed.Build();
-            });
         }
 
         private static string GetWorkingSet()

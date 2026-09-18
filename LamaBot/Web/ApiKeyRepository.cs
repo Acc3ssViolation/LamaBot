@@ -34,12 +34,7 @@ namespace LamaBot.Web
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            return dbApiKeys.Select(k => new ApiKey(
-                k.Key, 
-                k.GuildId, 
-                k.Content.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-                k.ExpiresUtc)
-            ).ToList();
+            return dbApiKeys.Select(MapKey).ToList();
         }
 
         public async Task<ApiKeyInfo?> GetApiKeyInfoAsync(ulong guildId, string apiKey, CancellationToken cancellationToken)
@@ -73,8 +68,50 @@ namespace LamaBot.Web
             Debug.Assert(dbApiKey.GuildId == guildId);
             Debug.Assert(dbApiKey.Key == apiKey);
 
+            return MapInfo(dbApiKey);
+        }
+
+        public async Task<ApiKeyInfo?> RevokeApiKeyAsync(string apiKey, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbApiKey = await dbContext.ApiKeys
+                .FirstOrDefaultAsync(k => k.Key == apiKey, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (dbApiKey == null)
+                return null;
+
+            if (dbApiKey.ExpiresUtc < DateTime.UtcNow)
+                return MapInfo(dbApiKey);
+
+            dbApiKey.ExpiresUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            return MapInfo(dbApiKey);
+        }
+
+        public async Task<ApiKey> CreateApiKeyAsync(ulong guildId, IEnumerable<string> roles, DateTime? expirationUtc, CancellationToken cancellationToken = default)
+        {
+            using var dbContext = _dbContextFactory();
+
+            var dbApiKey = CreateApiKey(guildId, roles, expirationUtc);
+            dbContext.ApiKeys.Add(dbApiKey);
+
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return MapKey(dbApiKey);
+        }
+
+        private static ApiKey MapKey(DbApiKey dbApiKey)
+        {
             var roles = dbApiKey.Content.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return new ApiKeyInfo(guildId, roles, dbApiKey.ExpiresUtc);
+            return new ApiKey(dbApiKey.Key, dbApiKey.GuildId, roles, dbApiKey.ExpiresUtc);
+        }
+
+        private static ApiKeyInfo MapInfo(DbApiKey dbApiKey)
+        {
+            var roles = dbApiKey.Content.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return new ApiKeyInfo(dbApiKey.GuildId, roles, dbApiKey.ExpiresUtc);
         }
 
         private static DbApiKey CreateApiKey(ulong guildId, IEnumerable<string> roles, DateTime? expiresUtc)
