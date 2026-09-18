@@ -22,7 +22,7 @@ namespace LamaBot.Modules.Moderation
             await DeferAsync(true);
 
             var messages = await textChannel.GetMessagesAsync(count + 10).FlattenAsync();
-            await textChannel.DeleteMessagesAsync(messages.Where(m => !(m.Flags ?? MessageFlags.None).HasFlag(MessageFlags.Ephemeral)).Take(count));
+            await textChannel.DeleteMessagesAsync(messages.Where(m => !(m.Flags ?? MessageFlags.None).HasFlag(MessageFlags.Ephemeral) && m.Source != MessageSource.System).Take(count));
 
             await ModifyOriginalResponseAsync(msg => msg.Content = $"Deleted {count} messages from this channel");
         }
