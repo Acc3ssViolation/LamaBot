@@ -69,6 +69,8 @@ namespace LamaBot.Modules.Xkcd
         private async Task<Comic> GetComicAsync(string url)
         {
             var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
             var text = await response.Content.ReadAsStringAsync();
             var image = ImageRegex().Match(text).Groups[^1].Value;
             var title = TitleRegex().Match(text).Groups[^1].Value;
