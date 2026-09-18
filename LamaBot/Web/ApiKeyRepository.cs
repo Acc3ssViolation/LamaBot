@@ -47,22 +47,6 @@ namespace LamaBot.Web
                 .ConfigureAwait(false);
 
             if (dbApiKey == null)
-            {
-                var dbSettingKey = await dbContext.ServerSettings
-                    .FirstOrDefaultAsync(k => k.GuildId == guildId && k.Code == LegacyApiKeySetting, cancellationToken)
-                    .ConfigureAwait(false);
-                if (dbSettingKey != null)
-                {
-                    // Perform migration from legacy format to new api key record
-                    dbApiKey = CreateApiKey(guildId, [WebRoles.QuoteReader, WebRoles.ForumChannelReader], null);
-                    dbApiKey.Key = dbSettingKey.Value;
-                    dbContext.ApiKeys.Add(dbApiKey);
-                    dbContext.ServerSettings.Remove(dbSettingKey);
-                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            if (dbApiKey == null)
                 return null;
 
             Debug.Assert(dbApiKey.GuildId == guildId);
