@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using LamaBot.Modules.Ping;
 using LamaBot.Modules.UserCommands;
+using LamaBot.Modules.Audit;
 
 namespace LamaBot
 {
@@ -88,6 +89,7 @@ namespace LamaBot
                         .AddServerSettings()
                         .AddInteractiveComponents()
                         .AddMemoryCache()
+                        .AddAudit()
                         .AddSingleton<HttpClient>()
                         .AddSingleton(discordConfig)
                         .AddSingleton<DiscordSocketClient>()

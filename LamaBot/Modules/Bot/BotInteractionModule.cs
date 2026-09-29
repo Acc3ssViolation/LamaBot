@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using LamaBot.Web;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;

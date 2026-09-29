@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LamaBot.Modules.Audit;
+using System;
 using System.Threading.Tasks;
 
 namespace LamaBot.Modules.Say
@@ -8,6 +10,13 @@ namespace LamaBot.Modules.Say
     [CommandContextType(InteractionContextType.Guild)]
     public class SayModule : InteractionModuleBase
     {
+        private readonly IAuditLog _audit;
+
+        public SayModule(IAuditLog audit)
+        {
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
+        }
+
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [SlashCommand("say", "Say something!")]
         public async Task SayAsync(
@@ -16,7 +25,8 @@ namespace LamaBot.Modules.Say
             )
         {
             await DeferAsync(ephemeral: true);
-            await channel.SendMessageAsync(message);
+            var msg = await channel.SendMessageAsync(message);
+            await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Say), $"Message was sent: [link](https://discord.com/channels/{channel.Guild.Id}/{msg.Channel.Id}/{msg.Id})");
             await ModifyOriginalResponseAsync(msg => msg.Content = $"Message delivered to {channel}");
         }
 
@@ -49,7 +59,8 @@ namespace LamaBot.Modules.Say
                 return;
             }
 
-            await channel.SendMessageAsync(messageReference: new MessageReference(messageId: messageId, channelId: channelId, guildId: guildId), text: reply);
+            var msg = await channel.SendMessageAsync(messageReference: new MessageReference(messageId: messageId, channelId: channelId, guildId: guildId), text: reply);
+            await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Say), $"Reply was sent: [link](https://discord.com/channels/{channel.Guild.Id}/{msg.Channel.Id}/{msg.Id})");
             await ModifyOriginalResponseAsync(msg => msg.Content = $"Reply delivered to {channel}");
         }
     }

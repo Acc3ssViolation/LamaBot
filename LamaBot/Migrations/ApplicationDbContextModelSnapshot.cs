@@ -15,7 +15,7 @@ namespace LamaBot.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.20");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.15");
 
             modelBuilder.Entity("LamaBot.Database.DbApiKey", b =>
                 {
@@ -40,6 +40,30 @@ namespace LamaBot.Migrations
                     b.HasIndex("Key");
 
                     b.ToTable("ApiKeys");
+                });
+
+            modelBuilder.Entity("LamaBot.Database.DbAuditEntry", b =>
+                {
+                    b.Property<ulong>("GuildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("TimestampUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("GuildId", "UserId", "TimestampUtc");
+
+                    b.ToTable("AuditEntries");
                 });
 
             modelBuilder.Entity("LamaBot.Database.DbCronMessage", b =>

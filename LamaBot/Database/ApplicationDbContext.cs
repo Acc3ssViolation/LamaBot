@@ -10,6 +10,7 @@ namespace LamaBot.Database
         public DbSet<DbServerSetting> ServerSettings { get; set; }
         public DbSet<DbApiKey> ApiKeys { get; set; }
         public DbSet<DbUserCommand> UserCommands { get; set; }
+        public DbSet<DbAuditEntry> AuditEntries { get; set; }
 
 
         public ApplicationDbContext() : base(DefaultOptions)
@@ -28,6 +29,7 @@ namespace LamaBot.Database
             DbServerSetting.OnModelCreating(modelBuilder);
             DbApiKey.OnModelCreating(modelBuilder);
             DbUserCommand.OnModelCreating(modelBuilder);
+            DbAuditEntry.OnModelCreating(modelBuilder);
         }
 
         public static DbContextOptions<ApplicationDbContext> DefaultOptions

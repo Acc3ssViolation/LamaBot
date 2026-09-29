@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using LamaBot.Components;
+using LamaBot.Modules.Audit;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -12,12 +13,14 @@ namespace LamaBot.Modules.UserCommands
     [Group("commands", "Because all good things are customized by end users")]
     public class UserCommandInteractionModule : InteractionModuleBase
     {
+        private readonly IAuditLog _audit;
         private readonly IInteractiveComponentService _componentService;
         private readonly IUserCommandRepository _repository;
         private readonly ILogger<UserCommandInteractionModule> _logger;
 
-        public UserCommandInteractionModule(IInteractiveComponentService componentService, IUserCommandRepository repository, ILogger<UserCommandInteractionModule> logger)
+        public UserCommandInteractionModule(IAuditLog audit, IInteractiveComponentService componentService, IUserCommandRepository repository, ILogger<UserCommandInteractionModule> logger)
         {
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
             _componentService = componentService ?? throw new ArgumentNullException(nameof(componentService));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -89,7 +92,7 @@ namespace LamaBot.Modules.UserCommands
             try
             {
                 var removed = await _repository.DeleteCommandAsync(guildId.Value, commandId);
-                
+                await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(UserCommands), $"Command {commandId} deleted");
                 await ModifyOriginalResponseAsync((msg) =>
                 {
                     if (removed)
@@ -126,7 +129,7 @@ namespace LamaBot.Modules.UserCommands
             {
                 var command = new UserCommand(guildId.Value, 0, trigger, match, caseSensitive, response);
                 command = await _repository.AddCommandAsync(command);
-
+                await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(UserCommands), $"Command {command.Id} added");
                 await ModifyOriginalResponseAsync((msg) =>
                 {
                     msg.Content = $"Command {command.Id} \"{command.Trigger}\" was added";
