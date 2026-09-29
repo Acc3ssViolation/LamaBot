@@ -1,6 +1,7 @@
 ﻿using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LamaBot.Modules.Audit;
 using LamaBot.Servers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -86,6 +87,9 @@ namespace LamaBot
                 await interactionService.RegisterCommandsToGuildAsync(guild.Id).ConfigureAwait(false);
                 registeredGuilds.Add(guild.Id);
                 _logger.LogInformation("Registered interactions on guild {Name}", guild.Name);
+
+                var audit = _serviceProvider.GetRequiredService<IAuditLog>();
+                await audit.LogAsync(guild.Id, _discord.Client.CurrentUser.Id, nameof(LamaBot), "Bot started");
             };
             _discord.Client.Disconnected += (exc) =>
             {
