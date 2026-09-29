@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using LamaBot.Modules.Audit;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
@@ -13,12 +14,13 @@ namespace LamaBot.Modules.Bot
 {
     public class BotInteractionModule : InteractionModuleBase
     {
-
+        private readonly IAuditLog _audit;
         private readonly HttpClient _httpClient;
         private readonly ILogger<BotInteractionModule> _logger;
 
-        public BotInteractionModule(HttpClient httpClient, ILogger<BotInteractionModule> logger)
+        public BotInteractionModule(IAuditLog audit, HttpClient httpClient, ILogger<BotInteractionModule> logger)
         {
+            _audit = audit ?? throw new ArgumentNullException(nameof(audit));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -45,6 +47,7 @@ namespace LamaBot.Modules.Bot
         public async Task RestartAsync()
         {
             await RespondAsync("Rebooting bot...");
+            await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Bot), "Rebooting bot");
             await Task.Delay(1000);
             _logger.LogWarning("Rebooting for command!");
             Environment.Exit(0);
@@ -66,6 +69,8 @@ namespace LamaBot.Modules.Bot
             });
             try
             {
+                await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Bot), "Installing update");
+
                 var tempFilePath = Path.GetTempFileName();
                 using (var httpResponse = await _httpClient.GetAsync(attachment.Url).ConfigureAwait(false))
                 {
