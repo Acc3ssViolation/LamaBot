@@ -21,7 +21,6 @@ namespace LamaBot.Modules.Moderation
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         public async Task CleanChannelAsync([Summary("count", "How many messages to delete")][MaxValue(50)] int count)
         {
-
             if (Context.Channel is not SocketTextChannel textChannel)
             {
                 await RespondAsync("Can only clean text channels, sorry");

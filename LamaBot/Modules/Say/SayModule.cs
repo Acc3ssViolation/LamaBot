@@ -20,13 +20,18 @@ namespace LamaBot.Modules.Say
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [SlashCommand("say", "Say something!")]
         public async Task SayAsync(
-            [Summary("channel", "Where to say something")] SocketTextChannel channel,
+            [Summary("channel", "Where to say something")] SocketChannel channel,
             [Summary("message", "What to say")] string message
             )
         {
+            if (channel is not SocketTextChannel textChannel)
+            {
+                await RespondAsync("Not a text channel", ephemeral: true);
+                return;
+            }
             await DeferAsync(ephemeral: true);
-            var msg = await channel.SendMessageAsync(message);
-            await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Say), $"Message was sent: [link](https://discord.com/channels/{channel.Guild.Id}/{msg.Channel.Id}/{msg.Id})");
+            var msg = await textChannel.SendMessageAsync(message);
+            await _audit.LogAsync(Context.Interaction.GuildId ?? 0, Context.Interaction.User.Id, nameof(Say), $"Message was sent: [link](https://discord.com/channels/{textChannel.Guild.Id}/{msg.Channel.Id}/{msg.Id})");
             await ModifyOriginalResponseAsync(msg => msg.Content = $"Message delivered to {channel}");
         }
 
