@@ -12,6 +12,7 @@ namespace LamaBot.Modules.CopyCat
         private record ChannelStats()
         {
             public required string LastMessage { get; set; }
+            public required ulong LastMessageId { get; set; }
             public required int Count { get; set; }
         }
 
@@ -35,22 +36,31 @@ namespace LamaBot.Modules.CopyCat
             var stats = _memoryCache.GetOrCreate($"{guildChannel.Guild.Id}:{guildChannel.Id}", (cache) =>
             {
                 cache.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7);
-                return new ChannelStats { LastMessage = message.Content, Count = 0 };
+                return new ChannelStats { LastMessage = message.Content, LastMessageId = message.Id, Count = 1 };
             })!;
+
             if (!string.Equals(stats.LastMessage, message.Content, StringComparison.OrdinalIgnoreCase))
             {
-                stats.Count = 0;
+                stats.Count = 1;
                 stats.LastMessage = message.Content;
             }
-
-            stats.Count++;
-
-            if (stats.Count >= 3)
+            else
             {
-                _logger.LogInformation("Copy Cat ᓚ₍ ^. ̫ .^₎: {Message}", message.Content);
-                await guildChannel.SendMessageAsync(message.Content);
-                stats.Count = 0;
+                // Bugfix: filter out duplicate messages, we seem to get them sometimes? Seems to be mostly related to messages containing weblinks
+                // so perhaps it has to do with the embeds? No idea... :/
+                if (stats.LastMessageId == message.Id)
+                    return;
+
+                stats.Count++;
+                if (stats.Count >= 3)
+                {
+                    _logger.LogInformation("Copy Cat ᓚ₍ ^. ̫ .^₎: {Message}", message.Content);
+                    await guildChannel.SendMessageAsync(message.Content);
+                    stats.Count = 0;
+                }
             }
+
+            stats.LastMessageId = message.Id;
         }
     }
 }
